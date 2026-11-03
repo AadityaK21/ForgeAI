@@ -1,0 +1,277 @@
+.code,
+.data {
+  --border: #bac6bc;
+  --paper: #fafbf6;
+  --ink: #152920;
+  --quiet: #4d6559;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.code {
+  display: grid;
+  grid-template-columns: minmax(145px, 24%) minmax(0, 1fr);
+  height: clamp(380px, 61dvh, 740px);
+}
+.tree {
+  padding: 14px 5px;
+  overflow: auto;
+  border-right: 1px solid var(--border);
+}
+.tree small,
+.data small {
+  display: block;
+  font: 10px/1.4 monospace;
+  letter-spacing: 0.1em;
+  color: var(--quiet);
+  margin: 0 8px 12px;
+}
+.tree button,
+.bar button,
+.save button,
+.data button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.tree button {
+  width: 100%;
+  padding: 6px 3px;
+  text-align: left;
+  border-radius: 5px;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.tree button[aria-current="page"] {
+  background: #d8e8dd;
+  color: #163e29;
+}
+.tree button:hover {
+  background: #e2e9e2;
+}
+.folder svg,
+.file svg,
+.save svg {
+  flex-shrink: 0;
+}
+.editor {
+  display: grid;
+  min-width: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  background: #1e1e1e;
+  color: #f4f3ec;
+}
+.bar,
+.save,
+.data header,
+.apiRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.bar,
+.save {
+  padding: 9px 12px;
+  font: 12px/1.3 monospace;
+  background: #27312c;
+}
+.bar > span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.bar button {
+  white-space: nowrap;
+  font: 11px/1.2 sans-serif;
+  border: 1px solid #78897c;
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+.monaco {
+  min-height: 0;
+}
+.raw {
+  width: 100%;
+  resize: none;
+  background: #1e1e1e;
+  color: #fafafa;
+  line-height: 1.5;
+  font: 13px/1.55 monospace;
+  padding: 14px;
+}
+.save {
+  flex-wrap: wrap;
+}
+.save span {
+  max-height: 75px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  color: #d0dcd2;
+}
+.save .primary,
+.data .primary {
+  border-radius: 7px;
+  background: #d2edcc;
+  color: #173623;
+  padding: 8px 12px;
+  font-weight: 650;
+  min-height: 34px;
+}
+.save button:disabled,
+.data button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.data {
+  padding: clamp(12px, 2vw, 24px);
+  height: clamp(380px, 61dvh, 740px);
+  overflow: auto;
+}
+.data header > button {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+}
+.data small {
+  margin: 0 0 4px;
+}
+.data h2,
+.data h3 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+}
+.data h2 {
+  font:
+    32px/1.15 "Instrument Serif",
+    serif;
+}
+.data h3 {
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+.data p,
+.empty {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.dataSection {
+  padding-block: 16px;
+  border-top: 1px solid var(--border);
+  margin-top: 14px;
+}
+.data label {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+.data select,
+.data input,
+.data textarea {
+  background: #fff;
+  color: #14261b;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+  min-width: 0;
+  width: 100%;
+}
+.data form {
+  display: grid;
+  gap: 10px;
+}
+.data form button {
+  justify-self: start;
+}
+.apiRow {
+  align-items: end;
+}
+.apiRow > label:last-child {
+  flex: 1;
+}
+.data pre,
+.tableWrap {
+  overflow: auto;
+  max-width: 100%;
+  font: 12px/1.5 monospace;
+}
+.data pre {
+  padding: 12px;
+  border-radius: 8px;
+  background: #1d2722;
+  color: #e2f1dc;
+  max-height: 250px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.tableWrap table {
+  border-collapse: collapse;
+  margin-top: 14px;
+  font-size: 12px;
+  width: 100%;
+}
+.tableWrap caption {
+  text-align: left;
+  font: 11px/1.7 monospace;
+  color: var(--quiet);
+}
+.tableWrap th,
+.tableWrap td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.empty {
+  padding: 20px;
+}
+.tree button:focus-visible,
+.code button:focus-visible,
+.data :is(button, input, textarea, select):focus-visible {
+  outline: 2px solid #df7326;
+  outline-offset: -2px;
+}
+@media (max-width: 700px) {
+  .code {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 66dvh;
+  }
+  .tree {
+    max-height: 135px;
+    overflow: auto;
+    padding: 6px 4px;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .tree small {
+    margin-bottom: 3px;
+  }
+  .tree button {
+    min-height: 28px;
+  }
+  .data {
+    height: 66dvh;
+  }
+  .data select,
+  .data input,
+  .data textarea {
+    font-size: 16px;
+  }
+  .save {
+    padding: 6px;
+  }
+  .save .primary {
+    min-height: 38px;
+  }
+  .data h2 {
+    font-size: 26px;
+  }
+}

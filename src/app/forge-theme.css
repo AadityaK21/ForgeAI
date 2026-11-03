@@ -1,0 +1,76 @@
+@font-face {
+  font-family: "Clt Absans";
+  src: url("/fonts/absans-regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/jetbrains-mono-regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+:root {
+  color-scheme: light dark;
+  --font: "Clt Absans", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  --night: #0a0a0a;
+  --white: #fafafa;
+  --bg: light-dark(var(--white), var(--night));
+  --fg: light-dark(var(--night), var(--white));
+  --muted: light-dark(#565656, #aaa);
+  --line: light-dark(#d3d3d3, #3d3d3d);
+  --surface: light-dark(#f0f0f0, #181818);
+  --raised: light-dark(#fff, #232323);
+  --control-line: light-dark(#777, #929292);
+  --invert: var(--fg);
+  --on-invert: var(--bg);
+  --fast: 150ms;
+  --medium: 300ms;
+  --slow: 600ms;
+  --ease: cubic-bezier(.2,.7,.2,1);
+  font-family: var(--font);
+  color: var(--fg);
+  background: var(--bg);
+  font-synthesis: none;
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); }
+code, pre, kbd, samp { font-family: var(--mono); }
+button, input, textarea, select { font-family: inherit; }
+::selection { color: var(--bg); background: var(--fg); }
+:focus-visible { outline: 2px solid var(--fg); outline-offset: 3px; }
+.forge-mark { display: inline-block; flex: none; vertical-align: middle; overflow: visible; }
+.forge-mark__far { opacity: .46; }
+.forge-mark__trace { stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0; }
+.forge-mark__planes { transform-origin: center; }
+.forge-theme-toggle {
+  display: inline-grid; place-items: center; background: transparent; color: var(--fg);
+  height: 40px; width: 40px; padding: 0; flex: none; border-radius: 50%; border: 1px solid var(--line);
+  cursor: pointer; transition: transform var(--fast) var(--ease);
+}
+.forge-theme-toggle:hover { color: var(--bg); background: var(--fg); }
+.forge-theme-toggle:active { transform: scale(.97); }
+.forge-theme-toggle__sun, :root[data-theme="dark"] .forge-theme-toggle__moon { display: none; }
+:root[data-theme="dark"] .forge-theme-toggle__sun { display: block; }
+@media (prefers-reduced-motion: no-preference) {
+  html[data-mark-intro] .forge-mark__near { animation: forge-near var(--slow) var(--ease) backwards; }
+  html[data-mark-intro] .forge-mark__far { animation: forge-far var(--slow) var(--ease) 70ms backwards; }
+  html[data-mark-intro] .forge-mark__trace { animation: forge-trace var(--slow) var(--ease) both; }
+  .forge-mark[data-thinking="true"] .forge-mark__planes { animation: forge-think calc(2 * var(--slow)) ease-in-out infinite alternate; }
+  @media (hover: hover) { a:hover > .forge-mark .forge-mark__trace, button:hover > .forge-mark .forge-mark__trace { animation: forge-trace var(--medium) var(--ease); } }
+}
+@keyframes forge-near { from { opacity: 0; transform: translate(-3px,-2px); } }
+@keyframes forge-far { from { opacity: 0; transform: translate(3px,-2px); } }
+@keyframes forge-trace {
+  0% { opacity: .8; stroke-dashoffset: 1; }
+  65% { opacity: .8; stroke-dashoffset: 0; }
+  100% { opacity: 0; stroke-dashoffset: 0; }
+}
+@keyframes forge-think { to { transform: scale(.94); opacity: .65; } }
+@media(prefers-reduced-motion:reduce) {
+  *, *::before, *::after { animation-duration: 0s !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0s !important; }
+}

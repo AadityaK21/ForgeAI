@@ -1,0 +1,7 @@
+node_modules
+.sandboxes/
+.next
+.env*
+!.env.example
+prisma/*.db*
+*.tsbuildinfo

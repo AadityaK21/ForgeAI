@@ -1,0 +1,278 @@
+.fx-key-form {
+  display: grid;
+  gap: 14px;
+}
+.fx-setting-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #e9f3ee;
+  padding: 13px;
+  border: 1px solid #c8ddd2;
+  border-radius: 12px;
+  color: #083e33;
+}
+.fx-setting-summary small,
+.fx-setting-summary strong {
+  display: block;
+}
+.fx-setting-summary small {
+  font:
+    9px/1.4 "Plex Mono",
+    monospace;
+  letter-spacing: 0.09em;
+  margin-bottom: 4px;
+}
+.fx-setting-icon {
+  padding: 10px;
+  background: #d4e8db;
+  border-radius: 10px;
+}
+.fx-setting-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.fx-key-form label {
+  min-width: 0;
+}
+.fx-key-form fieldset {
+  padding: 14px 14px 6px;
+  border: 1px solid #d8ded7;
+  border-radius: 11px;
+  min-width: 0;
+}
+.fx-key-form legend {
+  padding: 0 5px;
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-weight: 600;
+}
+.fx-key-form fieldset label > span {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.fx-key-form fieldset small {
+  font-size: 11px;
+  color: #536458;
+  font-weight: 400;
+}
+.fx-key-form .fx-setting-note {
+  font-size: 12px;
+  margin: 0;
+  line-height: 1.5;
+  color: #56665c;
+}
+.fx-key-form .fx-persist {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.fx-key-form .fx-persist input {
+  width: auto;
+}
+.fx-setting-actions,
+.fx-studio-toolbar,
+.fx-quick-new,
+.fx-runtime-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fx-key-form .fx-primary {
+  background: #00594f;
+  color: white;
+}
+.fx-switch-project,
+.fx-studio-toolbar select {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: inherit;
+  border-radius: 7px;
+  padding: 5px 8px;
+  max-width: 160px;
+  text-overflow: ellipsis;
+}
+.fx-runtime-indicator {
+  font-size: 11px;
+  color: #36554a;
+  white-space: nowrap;
+}
+.fx-runtime-indicator i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #408d64;
+}
+.fx-quick-new {
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.fx-workbench {
+  max-width: none !important;
+}
+.fx-studio-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.35fr) minmax(0, 1fr);
+  gap: 15px;
+  align-items: start;
+}
+.fx-studio-brief,
+.fx-studio-output {
+  min-width: 0;
+}
+.fx-studio-brief {
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  display: grid;
+  gap: 12px;
+}
+.fx-studio-brief h2 {
+  font:
+    400 30px/1.1 "Instrument Serif",
+    serif;
+}
+.fx-studio-brief .fx-composer {
+  min-height: 145px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+.fx-studio-brief .fx-composer-options {
+  flex-wrap: wrap;
+}
+.fx-studio-brief .fx-composer-foot {
+  flex-wrap: wrap;
+  padding: 8px;
+}
+.fx-studio-brief .fx-composer textarea {
+  min-height: 84px;
+}
+.fx-studio-templates,
+.fx-studio-toolbar > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 12px;
+}
+.fx-studio-brief summary,
+.fx-terminal-audit summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+.fx-studio-brief .fx-plan-grid {
+  grid-template-columns: 1fr;
+}
+.fx-studio-brief .fx-plan {
+  padding: 10px;
+  overflow-wrap: anywhere;
+}
+.fx-studio-progress {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.fx-studio-progress h3 {
+  font-size: 13px;
+}
+.fx-studio-progress p,
+.fx-studio-progress li,
+.fx-terminal-audit p {
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.fx-studio-progress li {
+  padding: 3px 0;
+}
+.fx-studio-toolbar {
+  padding: 0 0 8px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--line);
+}
+.fx-studio-toolbar > button[aria-pressed="true"] {
+  background: #d7ecdf;
+  color: #234c3b;
+}
+.fx-terminal-audit {
+  padding: 10px;
+}
+@media (max-width: 1200px) {
+  .fx-studio-grid {
+    grid-template-columns: 1fr;
+  }
+  .fx-studio-brief {
+    grid-template-columns: 1fr auto;
+  }
+  .fx-studio-brief .fx-composer,
+  .fx-studio-progress,
+  .fx-studio-brief details {
+    grid-column: 1/-1;
+  }
+  .fx-studio-brief h2 {
+    display: none;
+  }
+  .fx-runtime-indicator {
+    display: none;
+  }
+}
+@media (max-width: 700px) {
+  .forge .fx-top .fx-config {
+    display: inline-flex;
+    width: 37px;
+    height: 37px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid #ffffff52;
+    color: inherit;
+    background: #28160d38;
+    border-radius: 50%;
+  }
+  .fx-config span,
+  .fx-runtime-indicator {
+    display: none;
+  }
+  .fx-setting-pair {
+    grid-template-columns: 1fr;
+  }
+  .fx-studio-brief {
+    background: #241b17;
+    color: #f4e8db;
+  }
+  .fx-studio-brief .fx-composer {
+    padding: 8px;
+    background: #1b1411;
+  }
+  .fx-studio-brief .fx-overline {
+    align-self: center;
+  }
+  .fx-workbench .fx-tabs {
+    overflow-x: auto;
+    max-width: 100%;
+  }
+  .fx-workbench .fx-tabs button {
+    white-space: nowrap;
+    padding: 7px;
+    font-size: 12px;
+  }
+  .fx-studio-toolbar {
+    gap: 4px;
+  }
+  .fx-studio-toolbar select {
+    max-width: 95px;
+  }
+  .fx-studio-brief .fx-composer .fx-composer-options {
+    flex-wrap: nowrap;
+  }
+  .fx-top-actions {
+    gap: 5px;
+  }
+}

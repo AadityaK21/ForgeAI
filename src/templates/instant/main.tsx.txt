@@ -1,0 +1,25 @@
+import React, { useSyncExternalStore } from "react";
+import { createRoot } from "react-dom/client";
+import App from "../src/App";
+const embedded=location.href.startsWith("about:srcdoc");
+let currentPath="/";
+function snapshot(){return embedded?currentPath:location.hash.slice(1)||"/";}
+function subscribe(fn:()=>void){window.addEventListener("hashchange",fn);return ()=>window.removeEventListener("hashchange",fn);}
+function Root(){
+ const path=useSyncExternalStore(subscribe,snapshot);
+ return <App path={path}/>;
+}
+document.addEventListener("click",e=>{
+ const a=e.target instanceof Element?e.target.closest("a[href]"):null;
+ const href=a?.getAttribute("href");
+ if(!href||e.defaultPrevented||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
+ const route=href.startsWith("#/")?href.slice(1):href;
+ if(!route.startsWith("/")||route.startsWith("//"))return;
+ e.preventDefault();
+ if(embedded){
+   currentPath=route;
+   document.documentElement.dataset.forgePage=route;
+   window.dispatchEvent(new Event("hashchange"));
+ }else location.hash=route;
+});
+createRoot(document.getElementById("root")!).render(<Root/>);

@@ -1,0 +1,349 @@
+.scene {
+  --ink: #1d2721;
+  --muted: #626c64;
+  --line: #d9ded7;
+  --panel: #fff;
+  --accent: #174c3e;
+  min-height: 100svh;
+  background: #f8f9f6;
+  color: var(--ink);
+  font-family: "Instrument Sans", Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+.head {
+  height: 72px;
+  padding: 0 clamp(20px, 5vw, 88px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+.brand,
+.back,
+.path,
+.path span,
+.storyTop,
+.eyebrow,
+.submit {
+  display: flex;
+  align-items: center;
+}
+.brand,
+.back,
+.switch a {
+  color: inherit;
+  text-decoration: none;
+}
+.brand {
+  gap: 8px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -1.2px;
+}
+.brand span {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0;
+  border-left: 1px solid var(--line);
+  padding-left: 10px;
+  margin-left: 3px;
+}
+.mark {
+  display: block;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    #bd521e 0deg 8deg,
+    transparent 8deg 19deg
+  );
+  mask: radial-gradient(
+    circle,
+    transparent 29%,
+    #000 32%,
+    #000 65%,
+    transparent 69%
+  );
+}
+.back {
+  font-size: 13px;
+  gap: 6px;
+}
+.layout {
+  width: min(1150px, 100%);
+  margin: auto;
+  display: grid;
+  grid-template-columns: 1fr 1.04fr;
+  min-height: min(730px, calc(100svh - 100px));
+  padding: 30px;
+  align-items: stretch;
+}
+.story {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 22px;
+  background: #e5e9df;
+  color: #244739;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 35px;
+}
+.story:before {
+  position: absolute;
+  content: "";
+  inset: 0;
+  background-image: radial-gradient(#80947d52 0.8px, transparent 0.9px);
+  background-size: 8px 8px;
+  mask-image: linear-gradient(160deg, #000, transparent 95%);
+  z-index: -1;
+}
+.storyTop,
+.eyebrow,
+.storyText small {
+  font: 650 10px/1.4 system-ui;
+  letter-spacing: 0.14em;
+}
+.storyTop,
+.eyebrow {
+  gap: 8px;
+}
+.storyTop i,
+.eyebrow span {
+  width: 6px;
+  height: 6px;
+  background: #b05a33;
+  border-radius: 50%;
+}
+.diagram {
+  position: relative;
+  margin: 1rem auto;
+  width: min(90%, 320px);
+  aspect-ratio: 1.12;
+  display: grid;
+  place-items: center;
+}
+.halo,
+.halo:before,
+.halo:after {
+  position: absolute;
+  content: "";
+  border-radius: 50%;
+  border: 1px solid #7583714d;
+  inset: 4% 8%;
+  transform: rotate(-26deg) scaleY(0.46);
+}
+.halo:before {
+  inset: -12%;
+  transform: rotate(48deg) scaleY(1.44);
+}
+.halo:after {
+  inset: -22%;
+  transform: rotate(-42deg) scaleY(1.08);
+}
+.orb {
+  position: relative;
+  width: 47%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 33% 23%,
+    #fff7cf 1%,
+    #ffca7b 12%,
+    #e98135 34%,
+    #be531e 55%,
+    #69351e 75%,
+    #353b29 100%
+  );
+  box-shadow:
+    inset -8px -8px 12px #b84e1f38,
+    7px 10px 30px #966a2926;
+}
+.storyText h2,
+.formInner h1 {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.05em;
+  line-height: 1.02;
+  margin: 0.25em 0;
+}
+.storyText h2 {
+  font-size: clamp(2.5rem, 3.9vw, 4.6rem);
+}
+.storyText em {
+  font-weight: 400;
+}
+.path {
+  margin: 22px 0 0;
+  gap: 10px;
+}
+.path span {
+  gap: 5px;
+  font-size: 12px;
+}
+.formPane {
+  display: grid;
+  place-items: center;
+  padding: 28px clamp(22px, 5vw, 74px);
+}
+.formInner {
+  width: min(100%, 365px);
+}
+.formInner h1 {
+  font-size: clamp(2.65rem, 4vw, 3.95rem);
+}
+.formInner > p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.formInner form {
+  margin-top: 26px;
+}
+.formInner label {
+  font-size: 13px;
+  font-weight: 650;
+  display: block;
+  margin: 16px 0 6px;
+}
+.formInner input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--panel);
+  color: var(--ink);
+  padding: 11px 13px;
+  font-size: 16px;
+}
+.password {
+  position: relative;
+}
+.password input {
+  padding-right: 47px;
+}
+.password button {
+  position: absolute;
+  inset: 0 2px 0 auto;
+  width: 42px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+.tip,
+.error {
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 6px;
+}
+.tip {
+  color: var(--muted);
+}
+.error {
+  color: #9b3119;
+}
+.submit {
+  width: 100%;
+  margin: 24px 0 14px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 10px;
+  font-weight: 650;
+  min-height: 45px;
+  justify-content: space-between;
+  padding: 0 14px;
+}
+.submit:disabled {
+  opacity: 0.7;
+}
+.switch a {
+  text-decoration: underline;
+  font-weight: 600;
+  color: var(--accent);
+  text-underline-offset: 3px;
+}
+.scene :focus-visible {
+  outline: 2px solid #a8582c;
+  outline-offset: 3px;
+}
+@media (max-width: 720px) {
+  .scene {
+    --ink: #fff5ec;
+    --muted: #d1c3b8;
+    --line: #5d4d42;
+    --panel: #261f1c;
+    --accent: #ffb078;
+    background:
+      radial-gradient(
+        ellipse 140% 290px at 18% 0,
+        #b95321,
+        #732e16 45%,
+        transparent 100%
+      ),
+      #171514;
+  }
+  .head {
+    height: 59px;
+    background: transparent;
+    border-color: #ffffff2b;
+  }
+  .brand span {
+    color: #f7d0b6;
+  }
+  .mark {
+    background: repeating-conic-gradient(
+      #ffd4a6 0deg 8deg,
+      transparent 8deg 19deg
+    );
+  }
+  .layout {
+    display: flex;
+    flex-direction: column;
+    min-height: auto;
+    padding: 22px clamp(17px, 5vw, 30px) 35px;
+    gap: 10px;
+  }
+  .story {
+    order: 0;
+    padding: 0;
+    background: none;
+    border-radius: 0;
+  }
+  .story:before,
+  .storyTop,
+  .storyText,
+  .halo {
+    display: none;
+  }
+  .diagram {
+    width: 59px;
+    height: 59px;
+    margin: 0 0 4px;
+  }
+  .orb {
+    width: 100%;
+  }
+  .formPane {
+    display: block;
+    padding: 8px 0;
+  }
+  .formInner {
+    width: min(100%, 425px);
+    margin: 0 auto;
+  }
+  .formInner h1 {
+    font-size: 46px;
+  }
+  .submit {
+    color: #28180f;
+  }
+  .eyebrow span {
+    background: #ffac6c;
+  }
+  .error {
+    color: #ffc19d;
+  }
+}

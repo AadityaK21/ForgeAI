@@ -1,0 +1,141 @@
+/* The same folded contour appears as an ink drawing on desktop and a light
+   trace on mobile. The geometry is static; only its entry layer moves. */
+.fx-intro {
+  --fold-contour: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20360%20210%27%3E%3Cdefs%3E%3Cpath%20id%3D%27fold%27%20d%3D%27M46%20129C60%2059%20134%2034%20176%2061C219%2088%20179%20131%20140%20142C102%20152%2089%20125%20138%20113C194%2099%20294%20132%20317%2062%27%2F%3E%3C%2Fdefs%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27white%27%20stroke-width%3D%271.2%27%20stroke-linecap%3D%27round%27%3E%3Cuse%20href%3D%27%23fold%27%20transform%3D%27rotate(-14.700000000000001%20180%20105)%20translate(0%20-6.65)%27%2F%3E%3Cuse%20href%3D%27%23fold%27%20transform%3D%27rotate(-12.600000000000001%20180%20105)%20translate(0%20-5.70)%27%2F%3E%3Cuse%20href%3D%27%23fold%27%20transform%3D%27rotate(-10.5%20180%20105)%20translate(0%20-4.75)%27%2F%3E%3Cuse%20href%3D%27%23fold%27%20transform%3D%27rotate(-8.4%20180%20105)%20translate(0%20-3.80)%27%2F%3E%3Cuse%20href%3D%27%23fold%27%20transform%3D%27rotate(-6.300000000000001%20180%20105)%20translate(0%20-2.85)%27%2F%3E%3Cuse%20href%3D%27%23fold%27%20transform%3D%27rotate(-4.2%20180%20105)%20translate(0%20-1.90)%27%2F%3E%3Cuse%20href%3D%27%23fold%27%20transform%3D%27rotate(-2.1%20180%20105)%20translate(0%20-0.95)%27%2F%3E%3Cuse%20href%3D%27%23fold%27%20transform%3D%27rotate(0%20180%20105)%20translate(0%200.00)%27%2F%3E%3Cuse%20href%3D%27%23fold%27%20transform%3D%27rotate(2.1%20180%20105)%20translate(0%200.95)%27%2F%3E%3Cuse%20href%3D%27%23fold%27%20transform%3D%27rotate(4.2%20180%20105)%20translate(0%201.90)%27%2F%3E%3Cuse%20href%3D%27%23fold%27%20transform%3D%27rotate(6.300000000000001%20180%20105)%20translate(0%202.85)%27%2F%3E%3Cuse%20href%3D%27%23fold%27%20transform%3D%27rotate(8.4%20180%20105)%20translate(0%203.80)%27%2F%3E%3Cuse%20href%3D%27%23fold%27%20transform%3D%27rotate(10.5%20180%20105)%20translate(0%204.75)%27%2F%3E%3Cuse%20href%3D%27%23fold%27%20transform%3D%27rotate(12.600000000000001%20180%20105)%20translate(0%205.70)%27%2F%3E%3Cuse%20href%3D%27%23fold%27%20transform%3D%27rotate(14.700000000000001%20180%20105)%20translate(0%206.65)%27%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27white%27%20opacity%3D%27.5%27%20stroke-width%3D%27.8%27%3E%3Cpath%20d%3D%27M22%2032h14m-7-7v14m284%20125h14m-7-7v14M22%20180h42m6%200h8M282%2022h22%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+}
+.fx-intro::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+  mask: var(--fold-contour) center / contain no-repeat;
+  background: linear-gradient(118deg, #f3d3a7 8%, #ff9d53 48%, #71ad99 90%);
+}
+.fx-composer {
+  position: relative;
+}
+.fx-composer::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  top: -1px;
+  left: 8%;
+  right: 8%;
+  height: 2px;
+  border-radius: 100%;
+  background: linear-gradient(90deg, transparent, #df883c 35%, #ffb15c 55%, transparent);
+  opacity: 0;
+  transform: scaleX(.4);
+}
+.fx-composer:focus-within::before { opacity: 1; transform: scaleX(1); }
+.fx-idea-row button small { color: #647269; }
+.fx-dock-note { color: #526157; }
+.fx-timeline span[aria-current] { position: relative; }
+.fx-timeline span[aria-current]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -2px;
+  height: 2px;
+  background: currentColor;
+  transform-origin: left;
+}
+@media (min-width: 701px) {
+  .fx-stage { border-inline: 0; padding-top: clamp(14px, 3vh, 36px); }
+  .fx-intro {
+    align-items: flex-start;
+    justify-content: center;
+    text-align: left;
+    flex: 1;
+    min-height: 220px;
+    padding: clamp(25px, 4.8vw, 78px);
+    border: 1px solid #345951;
+    border-radius: 20px;
+    color: #fff4dd;
+    background:
+      radial-gradient(ellipse at 85% 40%, #426452 0%, transparent 49%),
+      linear-gradient(120deg, #123a34, #15392f 60%, #1b352e);
+  }
+  .fx-intro::before { right: 1.5%; top: 4%; width: 52%; height: 92%; }
+  .fx-intro .forge-sigil { width: 33px; height: 33px; }
+  .fx-intro > .fx-overline { color: #f5c598; margin: 12px 0 0; }
+  .fx-intro h1 { color: #fff6df; font-size: clamp(44px, 5.6vw, 86px); line-height: .98; margin: 12px 0 14px; }
+  .fx-intro p { color: #e0e9d9; max-width: min(40ch, 49%); font-size: clamp(13px, 1.15vw, 16px); }
+  .fx-wide { display:none; }
+  .fx-suggestions { margin-top: clamp(20px, 3.2vh, 36px); }
+  .fx-suggestions > .fx-label { text-align: left; color: #4e5e53; }
+  .fx-idea-row { gap: 10px; border: 0; }
+  .forge .fx-idea-row button { border: 1px solid #d4ddd3; border-radius: 12px; }
+  .fx-composer { border: 1px solid #cad6ca; border-radius: 17px; }
+  .fx-composer:focus-within { border-color: #588171; }
+  .fx-dock { margin-top: clamp(24px, 5vh, 76px); }
+}
+@media (max-width: 700px) {
+  .fx-intro::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    z-index: -2;
+    width: 66%;
+    height: 60%;
+    right: 5%;
+    top: 0;
+    background: radial-gradient(ellipse, #ffcc7448, transparent 70%);
+  }
+  .fx-intro::before {
+    width: min(82%, 380px);
+    height: 58%;
+    right: -2%;
+    top: 0;
+    opacity: .75;
+    background: linear-gradient(132deg, #ffe897, #ffd0a0 48%, #ffb06d 82%);
+  }
+  .fx-idea-row button small { color: #f7ba8f; }
+  .fx-mobile-logo, .fx-top-actions { position: relative; z-index: 1; }
+  .fx-mobile-login { color: #fffaf4; background: #3a221bb5; }
+  .forge .fx-menu { background: #3a221bb5; }
+}
+@media (max-width: 700px) and (prefers-reduced-motion: no-preference) {
+  .fx-intro::after { animation: moving-light 3.4s ease-in-out 2 alternate; }
+  @keyframes moving-light { to { transform: translate(-9%,8%) scale(1.14); opacity: .45; } }
+}
+@media (max-width: 700px) and (max-height: 675px) {
+  .fx-intro::before { height: 38%; width: 44%; opacity: .42; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .fx-intro::before { animation: draw-fold 1.25s cubic-bezier(.18,.7,.23,1) backwards; }
+  .fx-intro .forge-sigil { animation: turn-dial .65s cubic-bezier(.2,.8,.25,1) backwards; }
+  .fx-intro > .fx-overline, .fx-intro h1, .fx-intro p,
+  .fx-idea-row button, .fx-dock, .fx-sheet-heading, .fx-plan, .fx-history,
+  .fx-inspector, .fx-empty, .fx-run-panel {
+    animation: forge-arrive .42s cubic-bezier(.2,.76,.28,1) backwards;
+  }
+  .fx-intro h1 { animation-delay: 45ms; }
+  .fx-intro p, .fx-idea-row button:first-child { animation-delay: 85ms; }
+  .fx-idea-row button:nth-child(2) { animation-delay: 135ms; }
+  .fx-idea-row button:nth-child(3), .fx-dock { animation-delay: 180ms; }
+  .fx-side-nav button svg, .fx-rail button svg, .fx-tabs button, .fx-send svg,
+  .fx-idea-row button, .fx-idea-row button > span svg {
+    transition: transform .22s ease-out, background-color .16s ease-out;
+  }
+  .fx-composer::before { transition: opacity .18s, transform .28s ease-out; }
+  .fx-modal[open] > section { animation: inspect-open .2s cubic-bezier(.2,.75,.3,1) backwards; }
+  .fx-modal[open]::backdrop { animation: backdrop-in .18s ease-out; }
+  .fx-run-panel .fx-orb { animation: orbit-breathe 2.8s ease-in-out 2 alternate; }
+  .fx-timeline span[aria-current]::after { animation: register-step .45s ease-out; }
+  .fx-send:active svg, .fx-idea-row button:active { transform: scale(.97); }
+  @media (hover: hover) {
+    .fx-send:hover svg, .fx-idea-row button:hover > span svg { transform: translate(2px,-2px); }
+    .fx-idea-row button:hover { transform: translateY(-3px); }
+    .fx-side-nav button:hover svg, .fx-rail button:hover svg { transform: rotate(-7deg); }
+  }
+  @keyframes forge-arrive { from { opacity: .2; transform: translateY(9px); } }
+  @keyframes draw-fold { from { opacity: 0; transform: translate(9px,-4px) rotate(-4deg) scale(.93); } }
+  @keyframes turn-dial { from { opacity: .2; transform: rotate(-35deg) scale(.85); } }
+  @keyframes orbit-breathe { to { transform: translateY(-3px) scale(1.04); } }
+  @keyframes register-step { from { transform: scaleX(0); } }
+  @keyframes inspect-open { from { opacity: .4; transform: translateY(7px) scale(.985); } }
+  @keyframes backdrop-in { from { opacity: 0; } }
+}
