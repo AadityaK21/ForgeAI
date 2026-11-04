@@ -1,16 +1,9 @@
 "use client";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Eye,
-  EyeOff,
-  Layers3,
-  Braces,
-  ScanLine,
-  Check,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { ForgeMark } from "./forge-mark";
+import { ThemeToggle } from "./theme-toggle";
 import styles from "./account.module.css";
 
 export function AccountScreen({
@@ -54,58 +47,22 @@ export function AccountScreen({
   return (
     <main className={styles.scene}>
       <header className={styles.head}>
-        <Link href="/" className={styles.brand}>
-          <i className={styles.mark} aria-hidden="true" />
-          ForgeAI<span>by Merova</span>
+        <Link href="/" className={styles.brand} aria-label="ForgeAI workspace">
+          <ForgeMark /> ForgeAI <span>by Merova</span>
         </Link>
-        <Link href="/" className={styles.back}>
-          Workspace <ArrowUpRight size={15} />
-        </Link>
+        <div className={styles.headerTools}>
+          <Link href="/" className={styles.back}><ArrowLeft size={15} /> Workspace</Link>
+          <ThemeToggle />
+        </div>
       </header>
       <div className={styles.layout}>
-        <section className={styles.story} aria-label="ForgeAI builder workflow">
-          <div className={styles.storyTop}>
-            <i /> MEROVA / BUILD SYSTEM
-          </div>
-          <div className={styles.diagram} aria-hidden="true">
-            <div className={styles.halo} />
-            <div className={styles.orb} />
-          </div>
-          <div className={styles.storyText}>
-            <small>THE BUILDER</small>
-            <h2>
-              From the first brief
-              <br />
-              to a working <em>app.</em>
-            </h2>
-            <div className={styles.path}>
-              <span>
-                <Layers3 size={14} />
-                Plan
-              </span>
-              <ArrowRight size={13} />
-              <span>
-                <Braces size={14} />
-                Build
-              </span>
-              <ArrowRight size={13} />
-              <span>
-                <ScanLine size={14} />
-                Verify
-              </span>
-            </div>
-          </div>
-        </section>
-        <section className={styles.formPane}>
+        <section className={styles.formPane} aria-labelledby="account-title">
           <div className={styles.formInner}>
-            <small className={styles.eyebrow}>
-              <span /> {signup ? "NEW WORKSPACE" : "WORKSPACE ACCESS"}
-            </small>
-            <h1>{signup ? "Create an account" : "Welcome back"}</h1>
-            <p>
-              {signup
-                ? "Set up your ForgeAI workspace to save briefs, source files and build history."
-                : "Sign in to pick up your projects where you left off."}
+            <small className={styles.eyebrow}>/ {signup ? "New account" : "Workspace access"}</small>
+            <h1 id="account-title">{signup ? "Create an account." : "Sign in."}</h1>
+            <p className={styles.intro}>
+              {signup ? "Keep your briefs, source files and build history together."
+                : "Open your saved projects and pick up your last build."}
             </p>
             <form method="post" action={"/api/auth/" + id} onSubmit={submit}>
               <label htmlFor="account-email">Email address</label>
@@ -174,7 +131,7 @@ export function AccountScreen({
                   : signup
                     ? "Create account"
                     : "Sign in"}{" "}
-                {busy ? <Check size={16} /> : <ArrowRight size={16} />}
+                {busy ? <span className={styles.busyDot} aria-hidden="true" /> : <ArrowRight size={16} />}
               </button>
             </form>
             <p className={styles.switch}>
@@ -185,6 +142,20 @@ export function AccountScreen({
             </p>
           </div>
         </section>
+        <aside className={styles.sheet} aria-labelledby="sheet-title">
+          <div className={styles.sheetTop}><span>Merova / ForgeAI</span><span>Fig. {signup ? "02" : "01"}</span></div>
+          <div className={styles.drawing} aria-hidden="true">
+            <i className={styles.register} /><ForgeMark className={styles.figure} />
+            <i className={styles.cross} />
+          </div>
+          <div className={styles.sheetCopy}>
+            <small className={styles.eyebrow}>/ {signup ? "First build" : "Project archive"}</small>
+            <h2 id="sheet-title">{signup ? "Begin with a brief." : "Keep building."}</h2>
+            <p>{signup ? "Describe the first thing someone should be able to do in your app." :
+              "Return to a blueprint, inspect the source, or open the preview."}</p>
+          </div>
+          <div className={styles.sheetFoot}><span>01 / Plan</span><span>02 / Build</span><span>03 / Inspect</span></div>
+        </aside>
       </div>
     </main>
   );
