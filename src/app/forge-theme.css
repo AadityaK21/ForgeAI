@@ -27,6 +27,7 @@
   --control-line: light-dark(#777, #929292);
   --invert: var(--fg);
   --on-invert: var(--bg);
+  --theme-duration: 250ms;
   --fast: 150ms;
   --medium: 300ms;
   --slow: 600ms;
@@ -57,10 +58,14 @@ button, input, textarea, select { font-family: inherit; }
 .forge-theme-toggle__sun, :root[data-theme="dark"] .forge-theme-toggle__moon { display: none; }
 :root[data-theme="dark"] .forge-theme-toggle__sun { display: block; }
 @media (prefers-reduced-motion: no-preference) {
+  :root[data-theme-changing], :root[data-theme-changing] :where(body, main, aside, header, dialog, section, fieldset, button, input, textarea, select, .fx-library, .fx-rail, .fx-stage, .fx-intro, .fx-composer, .fx-idea-row button) {
+    transition: color var(--theme-duration) var(--ease), background-color var(--theme-duration) var(--ease), border-color var(--theme-duration) var(--ease);
+  }
   html[data-mark-intro] .forge-mark__near { animation: forge-near var(--slow) var(--ease) backwards; }
   html[data-mark-intro] .forge-mark__far { animation: forge-far var(--slow) var(--ease) 70ms backwards; }
   html[data-mark-intro] .forge-mark__trace { animation: forge-trace var(--slow) var(--ease) both; }
-  .forge-mark[data-thinking="true"] .forge-mark__planes { animation: forge-think calc(2 * var(--slow)) ease-in-out infinite alternate; }
+  .forge-mark[data-thinking="true"] .forge-mark__planes { animation: forge-think var(--slow) var(--ease) infinite alternate; }
+  .forge-mark[data-thinking="true"] .forge-mark__trace { animation: forge-trace var(--slow) var(--ease) infinite alternate; }
   @media (hover: hover) { a:hover > .forge-mark .forge-mark__trace, button:hover > .forge-mark .forge-mark__trace { animation: forge-trace var(--medium) var(--ease); } }
 }
 @keyframes forge-near { from { opacity: 0; transform: translate(-3px,-2px); } }
@@ -72,5 +77,6 @@ button, input, textarea, select { font-family: inherit; }
 }
 @keyframes forge-think { to { transform: scale(.94); opacity: .65; } }
 @media(prefers-reduced-motion:reduce) {
-  *, *::before, *::after { animation-duration: 0s !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0s !important; }
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .forge-theme-toggle:active { transform: none; }
 }
