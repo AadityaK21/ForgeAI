@@ -29,7 +29,7 @@ These edits resumed a partially completed local design pass. Saved changes were 
 | 2 Typography | Complete | Self-hosted Absans and JetBrains Mono; account layout and type hierarchy. |
 | 3 Motion | Complete | Native masked headline reveal and token-driven movement. |
 | 4 Mark and workspace | Complete | Original mark, exploded application drawing, responsive composer and navigation. |
-| 5 Guided build | Prepared | Deterministic demonstration, original pixel bird, accessible controls and lifecycle cleanup. |
+| 5 Guided build | Complete | Deterministic demonstration, original pixel bird, accessible controls and lifecycle cleanup. |
 | 6 Final QA | In progress | Production build, browser matrix, account workflows and performance measurements. |
 
 ## Verification so far
