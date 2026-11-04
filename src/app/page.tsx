@@ -1,5 +1,8 @@
 "use client";
 import "./forge-studio.css";
+import { AssemblyDrawing } from "@/components/assembly-drawing";
+import { ForgeMark } from "@/components/forge-mark";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -37,15 +40,15 @@ import {
   X,
 } from "lucide-react";
 import { ProjectActions, VisualPreview } from "@/components/project-tools";
-import {
-  ProviderSettings,
-  type RuntimeChoice,
-  type ProviderState,
-  type KeyHeaders,
+import type {
+  RuntimeChoice,
+  ProviderState,
+  KeyHeaders,
 } from "@/components/provider-settings";
-import { DatabaseInspector } from "@/components/database-inspector";
 import { reviewSources } from "@/lib/project-review";
-import { brief, newProject } from "@/lib/validation";
+const ProviderSettings = dynamic(() => import("@/components/provider-settings").then(module => module.ProviderSettings), { loading: () => <p role="status">Opening settings…</p> });
+const DatabaseInspector = dynamic(() => import("@/components/database-inspector").then(module => module.DatabaseInspector), { loading: () => <p role="status">Opening project data…</p> });
+const BuildDemo = dynamic(() => import("@/components/build-demo").then((module) => module.BuildDemo), { loading: () => <p role="status">Opening guided build…</p> });
 const CodePane = dynamic(
   () => import("@/components/code-pane").then((m) => m.CodePane),
   { ssr: false, loading: () => <p className="fx-empty">Opening files…</p> },
@@ -94,31 +97,6 @@ const ideas = [
     text: "Build a client portal for my studio. Give each client a private project view with milestones, deliverables and a feedback form.",
   },
 ];
-function Mark() {
-  return (
-    <svg viewBox="0 0 36 36" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M6 10 18 3l12 7-6 3.5-6-3.5-6 3.5zm0 4 11.8 6.8V33L6 26.2V20l6 3.4v-3.5L6 16.5zm13.8 6.8L30 15v7l-4.5 2.6v4L19.8 32z"
-      />
-    </svg>
-  );
-}
-function Sigil() {
-  return (
-    <svg className="forge-sigil" viewBox="0 0 100 100" aria-hidden="true">
-      {Array.from({ length: 12 }, (_, i) => (
-        <g key={i} transform={`rotate(${i * 30} 50 50)`}>
-          <path
-            fill={i % 3 === 0 ? "#ff992f" : i % 3 === 1 ? "#ea561f" : "#f47b35"}
-            d="m46 8 12 2 1 11-12-2z"
-          />
-        </g>
-      ))}
-      <path d="m50 37 12 13-12 13-12-13z" fill="#f4a16c" />
-    </svg>
-  );
-}
 function Modal({
   title,
   close,
@@ -131,8 +109,12 @@ function Modal({
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const el = ref.current;
+    const opener = document.activeElement;
     el?.showModal();
-    return () => el?.close();
+    return () => {
+      el?.close();
+      if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
+    };
   }, []);
   return (
     <dialog
@@ -199,6 +181,8 @@ export default function Studio() {
     [loading, setLoading] = useState(true),
     [projects, setProjects] = useState<Project[]>([]),
     [project, setProject] = useState<Details | null>(null);
+  const [watching, setWatching] = useState(false);
+  const watchButton = useRef<HTMLButtonElement>(null);
   const [view, setView] = useState<View>("Agent"),
     [tab, setTab] = useState<Tab>("Code"),
     [modal, setModal] = useState<
@@ -323,9 +307,11 @@ export default function Studio() {
     if (logBox.current) logBox.current.scrollTop = logBox.current.scrollHeight;
   }, [logs, tab]);
   function rememberDraft() {
-    sessionStorage.setItem("forge.authDraft", prompt);
-    sessionStorage.setItem("forge.authMode", mode);
-    sessionStorage.setItem("forge.authEngine", engine);
+    try {
+      sessionStorage.setItem("forge.authDraft", prompt);
+      sessionStorage.setItem("forge.authMode", mode);
+      sessionStorage.setItem("forge.authEngine", engine);
+    } catch { /* Navigation still works when storage is unavailable. */ }
   }
   function authenticate(path = "/sign-in") {
     rememberDraft();
@@ -344,11 +330,13 @@ export default function Studio() {
     setModal(null);
   }
   function useIdea(text: string) {
+    setWatching(false);
     setPrompt(text);
     navigate("Agent");
     requestAnimationFrame(() => field.current?.focus());
   }
   async function add(name: string) {
+    const { newProject } = await import("@/lib/validation");
     const parsed = newProject.safeParse({ title: name });
     if (!parsed.success)
       throw Error("Use a project name between 2 and 80 characters.");
@@ -378,7 +366,7 @@ export default function Studio() {
   async function logout() {
     try {
       await call("/api/auth/sign-out", { method: "POST", body: "{}" });
-      sessionStorage.removeItem("forge.authDraft");
+      try { sessionStorage.removeItem("forge.authDraft"); } catch { /* Sign-out succeeds without storage. */ }
       location.replace("/");
     } catch (e) {
       message(e);
@@ -418,6 +406,7 @@ export default function Studio() {
         engine,
         mode,
       };
+      const { brief } = await import("@/lib/validation");
       if (!brief.safeParse(payload).success)
         throw Error("Check your brief and try again.");
       setLogs("");
@@ -599,9 +588,7 @@ export default function Studio() {
         void run();
       }}
     >
-      <label htmlFor="brief" className="sr-only">
-        Your request
-      </label>
+      <label htmlFor="brief" className="fx-brief-label"><span>Project brief</span><span aria-hidden="true">INPUT / 01</span></label>
       <textarea
         id="brief"
         ref={field}
@@ -610,7 +597,7 @@ export default function Studio() {
         minLength={8}
         maxLength={6000}
         required
-        placeholder="Describe your app or the next change…"
+        placeholder="Describe the app you want to build…"
         onKeyDown={(e) => {
           if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
@@ -623,7 +610,7 @@ export default function Studio() {
           <button
             type="button"
             onClick={() => setModal("settings")}
-            aria-label="Engine settings"
+            aria-label={model + " settings"}
           >
             <Command size={14} />
             <span>{model}</span>
@@ -654,10 +641,10 @@ export default function Studio() {
           <button
             className="fx-send"
             disabled={loading || creating}
-            aria-label={mode === "plan" ? "Create blueprint" : "Run Build"}
-            title={mode === "plan" ? "Create blueprint" : "Run Build"}
+            aria-label={mode === "plan" ? "Create blueprint" : "Run build"}
+            title={mode === "plan" ? "Create blueprint" : "Run build"}
           >
-            <ArrowUpRight size={21} />
+            <span>{mode === "plan" ? "Plan" : "Run build"}</span><ArrowUpRight size={16} />
           </button>
         )}
       </div>
@@ -665,28 +652,9 @@ export default function Studio() {
   );
   return (
     <main className="forge">
-      <aside className="fx-rail">
-        <button
-          className="fx-mark"
-          aria-label="ForgeAI home"
-          onClick={() => navigate("Agent")}
-        >
-          <Mark />
-        </button>
-        <nav aria-label="Workspace tools">{nav(true)}</nav>
-        <button
-          className="fx-rail-end"
-          aria-label="Engine settings"
-          onClick={() => setModal("settings")}
-        >
-          <Settings2 size={19} />
-        </button>
-      </aside>
       <aside className="fx-library">
         <div className="fx-library-head">
-          <span>
-            Forge<span className="fx-ai">AI</span>
-          </span>
+          <button className="fx-wordmark" aria-label="ForgeAI home" onClick={() => navigate("Agent")}><ForgeMark />ForgeAI</button>
           <button
             aria-label="Search projects"
             onClick={() => {
@@ -735,8 +703,8 @@ export default function Studio() {
         </div>
         <div className="fx-library-end">
           <span className="fx-brand-mini">
-            <Mark />
-            MEROVA STUDIO
+            <ForgeMark />
+            FORGE WORKSPACE
           </span>
           <p>{user?.email || "A workspace for founders"}</p>
           {who}
@@ -745,7 +713,7 @@ export default function Studio() {
       <section className="fx-main">
         <header className="fx-top">
           <button className="fx-mobile-logo" onClick={() => navigate("Agent")}>
-            <Mark />
+            <ForgeMark />
             <span>
               ForgeAI<small>by Merova</small>
             </span>
@@ -782,6 +750,7 @@ export default function Studio() {
             <strong>{view}</strong>
           </div>
           <div className="fx-top-actions">
+            <ThemeToggle />
             {!user && !loading && (
               <Link
                 href="/sign-in"
@@ -799,7 +768,7 @@ export default function Studio() {
             )}
             <button
               className="fx-config"
-              aria-label="API key settings"
+              aria-label="Settings / API keys"
               title="API key settings"
               onClick={() => setModal("settings")}
             >
@@ -819,23 +788,31 @@ export default function Studio() {
           <section className="fx-agent">
             <div className="fx-stage">
               <div className="fx-intro">
-                <Sigil />
-                <span className="fx-overline">FORGE / BUILD AGENT</span>
-                <h1>
-                  <span className="fx-desktop-title">Forge Agent</span>
-                  <span className="fx-phone-title">
-                    What are we
-                    <br />
-                    building today?
-                  </span>
-                </h1>
-                <p>
-                  Turn a product brief into a blueprint, working code
-                  <br className="fx-wide" /> and a live app you can change.
-                </p>
+                <div className="fx-intro-copy">
+                  <span className="fx-overline"><span className="fx-status-dot" /> ForgeAI / Build agent</span>
+                  <h1><span><i>What will</i></span> <span><i>you build?</i></span></h1>
+                  <p>Describe your app. Shape the plan, inspect the code and try the result in your workspace.</p>
+                </div>
+                <div className="fx-study">
+                  <AssemblyDrawing />
+                  <button className="fx-watch" ref={watchButton} type="button" aria-expanded={watching}
+                    aria-controls="forge-guided-build" onClick={() => setWatching(!watching)}>
+                    <span>{watching ? "Close example" : "Watch a build"}</span><span aria-hidden="true">{watching ? "−" : "↗"}</span>
+                  </button>
+                </div>
+              </div>
+              <div id="forge-guided-build" hidden={!watching}>
+                {watching && <BuildDemo onUseBrief={useIdea} onClose={() => { setWatching(false); watchButton.current?.focus(); }} />}
+              </div>
+              <div className="fx-dock">
+                {composer}
+                <div className="fx-dock-note">
+                  <span>{project?.title || "New workspace"}</span>
+                  <span>Ctrl / ⌘ + Enter to run</span>
+                </div>
               </div>
               <div className="fx-suggestions">
-                <div className="fx-label">Try a starting point</div>
+                <div className="fx-label"><span>Starting points</span><button type="button" onClick={() => setModal("ideas")}>Prompt library <ArrowUpRight size={13}/></button></div>
                 <div className="fx-idea-row">
                   {ideas.map(({ icon: Icon, title, detail, text }, i) => (
                     <button key={title} onClick={() => useIdea(text)}>
@@ -850,13 +827,6 @@ export default function Studio() {
                       <p className="fx-idea-detail">{detail}</p>
                     </button>
                   ))}
-                </div>
-              </div>
-              <div className="fx-dock">
-                {composer}
-                <div className="fx-dock-note">
-                  <span>{project?.title || "New workspace"}</span>
-                  <span>Ctrl / ⌘ + Enter to run</span>
                 </div>
               </div>
             </div>
@@ -883,7 +853,7 @@ export default function Studio() {
               <>
                 {busy && (
                   <div className="fx-run-panel">
-                    <div className="fx-orb" aria-hidden="true" />
+                    <ForgeMark className="fx-active-mark" thinking />
                     <div>
                       <span className="fx-overline">LIVE SESSION</span>
                       <h2>
