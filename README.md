@@ -47,6 +47,14 @@ Tests cover token-by-token parsing, XML delimiters inside source, invalid paths,
 
 Set **FORGE_DOCKER_TEST=1** to include the Docker integration test. It exercises file containment, container startup and a real loopback preview.
 
+### Interface regression checks
+
+Start the app, install the Playwright Chromium browser with `npx playwright install chromium`, then run `npm run test:browser`. Alternatively set `CHROME_PATH` to an installed Chrome executable. `BASE_URL` defaults to `http://localhost:3000`. The suite checks the workspace, sign-in and signup at 375, 768, 1280 and 1920 pixels, in both themes and motion preferences, plus accessibility, the guided example, keyboard controls and storage failures.
+
+For account and persistent-file checks, use a separate local server and an empty, dedicated SQLite database. Set that server's `BUILDER_ACCESS_TOKEN` to a test invitation code, then supply the same value as `FORGE_QA_INVITE` and set `BASE_URL` to its loopback URL on a port other than 3000. The suite deliberately creates a disposable account and project. Never run this mode against customer data. Optional `FORGE_QA_SCREENSHOTS` saves screenshots to a chosen directory. `FORGE_QA_ACCOUNT_ONLY` or `FORGE_QA_LIFECYCLE_ONLY` runs a narrower check during debugging.
+
+Design decisions and measured limits are recorded in [DECISIONS.md](DECISIONS.md) and [PROGRESS.md](PROGRESS.md). The final interface pass keeps the existing generation API. The guided example is clearly labelled and does not make a paid model request.
+
 ## Private hosting
 
 Run this application on a persistent Node server with a writable SQLite volume and support for streaming requests up to ten minutes. Set **DATABASE_URL** to a persistent SQLite file and **BUILDER_ACCESS_TOKEN** to a long random server-side secret, complete setup, build, then run **npm start** behind HTTPS. The access token acts as a private invitation code during registration. Existing members sign in with their email and password. Passwords are salted and hashed with scrypt. The server stores only the digest of each expiring session token. Production uses a Secure, HttpOnly, same-site cookie and fails closed when the invitation code is absent. Development without an invitation code is intended for the localhost server.

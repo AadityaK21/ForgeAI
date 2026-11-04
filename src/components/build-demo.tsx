@@ -30,15 +30,22 @@ function DraftingBird() {
 }
 
 // A new, approved source for either appearance needs only this mapping.
-const presence = { mark: ForgeMark, pet: DraftingBird };
+const presence = {
+  mark: (thinking: boolean) => <ForgeMark thinking={thinking} />,
+  pet: () => <DraftingBird />,
+};
 type Appearance = keyof typeof presence;
 
+// useDemoClock is the local timeline. A future live demo can supply the same
+// phase and headline events from a server stream. Keep its credentials on the
+// server, close the stream on unmount and label the source in the demo footer.
 function useDemoClock() {
   const root = useRef<HTMLElement>(null);
   const controls = useRef<{ toggle(): void; replay(): void; pause(): void } | null>(null);
   const [frame, setFrame] = useState({ index: steps.length - 1, letters: title.length, paused: true, running: false });
   useEffect(() => {
-    if (!root.current) return;
+    const element = root.current;
+    if (!element) return;
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let paused = motion.matches;
     let elapsed: number = paused ? finished : 0;
@@ -86,11 +93,21 @@ function useDemoClock() {
       },
       pause() { paused = true; sync(); },
     };
-    const observer = new IntersectionObserver(entries => {
+    function measureVisibility() {
+      const rect = root.current?.getBoundingClientRect();
+      const next = !!rect && rect.bottom > 0 && rect.top < innerHeight && rect.right > 0 && rect.left < innerWidth;
+      if (visible !== next) { visible = next; sync(); }
+    }
+    const observer = typeof IntersectionObserver === "undefined" ? null : new IntersectionObserver(entries => {
       visible = entries[entries.length - 1].isIntersecting;
       sync();
     });
-    observer.observe(root.current);
+    if (observer) observer.observe(element);
+    else {
+      measureVisibility();
+      window.addEventListener("scroll", measureVisibility, { capture: true, passive: true });
+      window.addEventListener("resize", measureVisibility);
+    }
     function preferenceChanged() {
       if (motion.matches) { stop(); elapsed = finished; paused = true; }
       sync();
@@ -103,9 +120,12 @@ function useDemoClock() {
     window.addEventListener("pagehide", hide);
     window.addEventListener("pageshow", show);
     return () => {
+      active = false;
       stop();
       controls.current = null;
-      observer.disconnect();
+      observer?.disconnect();
+      window.removeEventListener("scroll", measureVisibility, true);
+      window.removeEventListener("resize", measureVisibility);
       motion.removeEventListener("change", preferenceChanged);
       document.removeEventListener("visibilitychange", sync);
       window.removeEventListener("pagehide", hide);
@@ -141,7 +161,7 @@ export function BuildDemo({ onUseBrief, onClose }: { onUseBrief(prompt: string):
           <div className={styles.canvas}>
             <div className={styles.grid} aria-hidden="true" />
             <div className={styles.wire} aria-hidden="true"><i/><i/><i/><i/></div>
-            <article className={styles.coffee} aria-label="Example coffee catalog" data-roast={lightRoast ? "light" : "house"}>
+            <article className={styles.coffee} aria-label="Example coffee catalog" aria-hidden={frame.index < 3 || undefined} data-roast={lightRoast ? "light" : "house"}>
               <div className={styles.mast}><span>Index Coffee</span><small>Roast index</small></div>
               <div className={styles.spread}>
                 <div><small>Morning edition</small><h3 aria-label={title}><span aria-hidden="true">{title.slice(0, frame.letters)}</span></h3></div>
@@ -174,9 +194,8 @@ export function BuildDemo({ onUseBrief, onClose }: { onUseBrief(prompt: string):
             </div>
           </div>
           {appearances.map(name => {
-            const Agent = presence[name];
             return <div key={name} role="tabpanel" id={id + name + "panel"} aria-labelledby={id + name} tabIndex={0} hidden={name !== appearance} className={styles.track}>
-              <span className={name === "mark" ? styles.mark : styles.runner}><span className={styles.sprite}><Agent /></span></span>
+              <span className={name === "mark" ? styles.mark : styles.runner}><span className={styles.sprite}>{presence[name](frame.running && !done && name === appearance)}</span></span>
             </div>;
           })}
           <ol className={styles.log} aria-label="Example build steps">
