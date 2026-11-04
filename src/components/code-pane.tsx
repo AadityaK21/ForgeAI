@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
-import Editor, { loader } from "@monaco-editor/react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import Editor, { loader, type Monaco } from "@monaco-editor/react";
 import {
   ChevronDown,
   ChevronRight,
@@ -10,6 +10,55 @@ import {
 } from "lucide-react";
 import styles from "./studio-inspector.module.css";
 loader.config({ paths: { vs: "/monaco" } });
+// The prepaint script, system preference and toggle all update this attribute.
+function observeTheme(notify: () => void) {
+  const observer = new MutationObserver(notify);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-theme"],
+  });
+  return () => observer.disconnect();
+}
+function editorTheme() {
+  return document.documentElement.dataset.theme === "dark" ? "vs-dark" : "vs";
+}
+
+// Resolve the same CSS tokens as the surrounding workbench. Token colors stay
+// neutral while comments, selections and diagnostics remain distinguishable.
+function applyEditorTheme(monaco: Monaco) {
+  const probe = document.createElement("span");
+  probe.hidden = true;
+  document.body.appendChild(probe);
+  function color(token: string) {
+    probe.style.color = `var(${token})`;
+    const channels = getComputedStyle(probe).color.match(/\d+/g)?.slice(0, 3);
+    if (!channels || channels.length !== 3) throw Error("Unable to resolve editor palette.");
+    return "#" + channels.map(channel => Number(channel).toString(16).padStart(2, "0")).join("");
+  }
+  try {
+    const foreground = color("--fg"), background = color("--bg"), muted = color("--muted"), line = color("--line"), surface = color("--surface");
+    monaco.editor.defineTheme("forge", {
+      base: editorTheme(), inherit: false,
+      rules: [
+        { token: "", foreground: foreground.slice(1) },
+        { token: "comment", foreground: muted.slice(1), fontStyle: "italic" },
+        { token: "string", foreground: muted.slice(1) },
+      ],
+      colors: {
+        "editor.background": background, "editor.foreground": foreground,
+        "editorLineNumber.foreground": muted, "editorLineNumber.activeForeground": foreground,
+        "editorCursor.foreground": foreground, "editor.selectionBackground": line,
+        "editor.inactiveSelectionBackground": surface, "editor.lineHighlightBackground": surface,
+        "editorWidget.background": background, "editorWidget.foreground": foreground,
+        "editorWidget.border": line, "editorError.foreground": foreground,
+        "editorWarning.foreground": muted, "editorInfo.foreground": muted,
+        "editorLink.activeForeground": foreground, "focusBorder": foreground,
+      },
+    });
+    monaco.editor.setTheme("forge");
+  } finally { probe.remove(); }
+}
+
 // Keep unsaved edits across workspace tabs in this browser page. Scope them to
 // a verified revision so another person's newer changes cannot be overwritten.
 const draftCache = new Map<string, Record<string, string>>();
@@ -51,6 +100,9 @@ export function CodePane({
   headers,
   onSaved,
 }: CodeProps) {
+  const theme = useSyncExternalStore(observeTheme, editorTheme, () => "vs");
+  const monaco = useRef<Monaco | null>(null);
+  useEffect(() => { if (monaco.current) applyEditorTheme(monaco.current); }, [theme]);
   const [closed, setClosed] = useState<Set<string>>(new Set());
   const cacheKey = (projectId ?? "") + ":" + revision;
   const [drafts, setDrafts] = useState<Record<string, string>>(
@@ -218,7 +270,9 @@ export function CodePane({
           <div className={styles.monaco}>
             <Editor
               height="100%"
-              theme="vs-dark"
+              theme="forge"
+              beforeMount={applyEditorTheme}
+              onMount={(_editor, instance) => { monaco.current = instance; }}
               path={"file:///forge/" + (projectId || "draft") + "/" + actual}
               language={languages[actual.split(".").pop() || ""] || "plaintext"}
               value={text}
@@ -228,7 +282,10 @@ export function CodePane({
               loading={<p className={styles.empty}>Opening editor…</p>}
               options={{
                 readOnly: !canEdit,
+                "semanticHighlighting.enabled": false,
+                bracketPairColorization: { enabled: false },
                 minimap: { enabled: false },
+                fontFamily: '"JetBrains Mono", ui-monospace, monospace',
                 fontSize: 13,
                 automaticLayout: true,
                 scrollBeyondLastLine: false,

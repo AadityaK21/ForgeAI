@@ -161,7 +161,12 @@ export function DatabaseInspector({ projectId, revision, headers }: Props) {
                   ))}
                 </select>
                 {table && db.columns.length > 0 && (
-                  <div className={styles.tableWrap}>
+                  <div
+                    className={styles.tableWrap}
+                    tabIndex={0}
+                    role="region"
+                    aria-label={table + " table preview"}
+                  >
                     <table>
                       <caption>{table} · up to 20 rows</caption>
                       <thead>
