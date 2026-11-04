@@ -27,7 +27,7 @@ These edits resumed a partially completed local design pass. Saved changes were 
 | 0 Audit | Complete | Recorded existing source, inspected the actual builder, restored the example stylesheet. 22 automated tests passed; two optional Docker tests skipped. |
 | 1 Palette | Complete | Neutral tokens, theme persistence and inspector surfaces. |
 | 2 Typography | Complete | Self-hosted Absans and JetBrains Mono; account layout and type hierarchy. |
-| 3 Motion | Prepared | Native masked headline reveal and token-driven movement. |
+| 3 Motion | Complete | Native masked headline reveal and token-driven movement. |
 | 4 Mark and workspace | Prepared | Original mark, exploded application drawing, responsive composer and navigation. |
 | 5 Guided build | Prepared | Deterministic demonstration, original pixel bird, accessible controls and lifecycle cleanup. |
 | 6 Final QA | In progress | Production build, browser matrix, account workflows and performance measurements. |
