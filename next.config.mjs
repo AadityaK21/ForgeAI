@@ -1,8 +1,7 @@
 const config = {
   devIndicators: false,
+  // Bundle E2B: its CommonJS entry requires ESM-only chalk on Vercel.
   serverExternalPackages: [
-    "@e2b/code-interpreter",
-    "e2b",
     "esbuild",
     "typescript",
     "tailwindcss",
