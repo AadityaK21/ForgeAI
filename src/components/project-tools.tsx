@@ -154,7 +154,7 @@ export function VisualPreview({
     window.addEventListener("message", receive);
     sync();
     return () => window.removeEventListener("message", receive);
-  }, [active, origin, sync]);
+  }, [active, origin, sync, setActive]);
   const validColor = (v: string) => !v || /^#[\da-fA-F]{6}$/.test(v);
   const valid = validColor(color) && validColor(background);
   const changed =

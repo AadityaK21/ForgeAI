@@ -59,4 +59,4 @@ function openStore(filename,schema){
  }
  return {request,close:()=>db.close()};
 }
-module.exports={schemaTables,openStore};
+module.exports={schemaTables,validate,openStore};

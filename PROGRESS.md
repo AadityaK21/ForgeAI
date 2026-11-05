@@ -84,3 +84,18 @@ Live Anthropic/OpenAI/E2B generation was not exercised in this design pass. No p
 Public email verification, account recovery, subscriptions and metering remain prerequisites for a paid public launch. This review does not claim those are complete.
 
 Studio Supabase, payments, DNS, hosting and legal pages are outside this repository's design scope. No production deployment was performed.
+
+## Vercel release preparation, 5 November 2026
+
+The owner subsequently authorized publishing ForgeAI as an independent Vercel project. Created `merova2/forgeai`, linked only to the ForgeAI repository, and connected its own Turso Starter database. The requested short Vercel subdomain is unavailable; the assigned domain is `forgeai-one-zeta.vercel.app`.
+
+- Added the Prisma libSQL adapter, versioned migrations and production configuration checks.
+- Persisted verified previews and per-project collection records in the remote database. Temporary build files can be discarded safely.
+- Kept local SQLite development and existing projects intact.
+- Added a database health endpoint and a documented persistent Node startup alternative.
+- Fixed lint findings in callback naming and effect dependencies without changing the UI design.
+- TypeScript, lint and production build pass. Backend suite: 25 passed, zero failed, two optional Docker integrations skipped.
+- The new integration test signs in through the real account handlers, compiles a React/lucide preview outside the repository, removes its cache and verifies saved source, previews, seeded records, CRUD and account isolation through the libSQL adapter.
+- The dedicated remote database migrations were applied successfully. Live deployment verification is still pending at this preparation commit.
+
+The site remains an invitation-only workspace with optional member-supplied model keys. A paid public SaaS launch still requires the account and billing work documented above.

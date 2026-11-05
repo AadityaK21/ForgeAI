@@ -10,6 +10,7 @@ import type { Event } from "./engine";
 import { containedFile, instantProject, instantId } from "./instant-paths";
 import { schemaTables } from "../templates/instant/store.cjs";
 import { template } from "./instant-starter";
+import { db, remoteStorage } from "./db";
 export { instantStarter, instantInstructions } from "./instant-starter";
 const modules = new Set([
   "react",
@@ -60,6 +61,10 @@ function typecheck(files: Record<string, string>, dir: string) {
     exists = host.fileExists;
   host.readFile = (p) => (allowed(p) ? read(p) : undefined);
   host.fileExists = (p) => allowed(p) && exists(p);
+  host.resolveModuleNames = (names, containingFile) => names.map(name =>
+    ts.resolveModuleName(name, modules.has(name)
+      ? path.join(process.cwd(), "forge-compiler.ts") : containingFile,
+    options, host).resolvedModule);
   host.getSourceFile = (name, language) => {
     const content = host.readFile(name);
     return content === undefined
@@ -211,6 +216,12 @@ async function compile(files: Record<string, string>, dir: string) {
   );
 }
 export async function readInstantHtml(projectId: string, id: string) {
+  instantId(id);
+  if (remoteStorage()) {
+    const asset = await db.previewAsset.findUnique({ where: { projectId_sandboxId: { projectId, sandboxId: id } } });
+    if (!asset) throw Error("No published preview for this revision.");
+    return asset.html;
+  }
   const root = await instantProject(projectId);
   return fs.readFile(
     await containedFile(root, instantId(id) + "/preview.html"),
@@ -218,6 +229,8 @@ export async function readInstantHtml(projectId: string, id: string) {
   );
 }
 export async function destroyInstant(projectId: string, id: string) {
+  instantId(id);
+  if (remoteStorage()) await db.previewAsset.deleteMany({ where: { projectId, sandboxId: id } });
   const root = await instantProject(projectId);
   const dest = path.join(root, instantId(id));
   const dir = await fs.lstat(dest).catch(() => null);
@@ -245,6 +258,13 @@ export async function createInstantWorker(
     const html = await compile(files, dir);
     signal.throwIfAborted();
     await fs.writeFile(preview, html, { mode: 0o600 });
+    if (remoteStorage()) {
+      if (Buffer.byteLength(html, "utf8") > 2_000_000) throw Error("Preview bundle exceeds the 2 MB limit.");
+      await db.previewAsset.upsert({
+        where: { projectId_sandboxId: { projectId, sandboxId: id } },
+        create: { projectId, sandboxId: id, html }, update: { html },
+      });
+    }
     compiled = true;
   }
   const worker = {
@@ -290,6 +310,11 @@ export async function createInstantWorker(
       new URLSearchParams({ projectId, sandboxId: id }),
     release: async (success: boolean) => {
       if (!success) await destroyInstant(projectId, id);
+      else if (remoteStorage()) {
+        const revisionDir = path.join(root, instantId(id));
+        if ((await fs.realpath(revisionDir)) === revisionDir)
+          await fs.rm(revisionDir, { recursive: true, force: true });
+      }
     },
   };
 }

@@ -5,3 +5,5 @@ node_modules
 !.env.example
 prisma/*.db*
 *.tsbuildinfo
+
+.vercel

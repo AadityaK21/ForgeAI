@@ -1,4 +1,5 @@
-import { db } from "./db";
+import { db, remoteStorage } from "./db";
+import { remoteDataRequest } from "./remote-data";
 import { containedFile, instantProject } from "./instant-paths";
 import { openStore, schemaTables } from "../templates/instant/store.cjs";
 
@@ -18,6 +19,7 @@ export async function instantDataRequest(
   path: string,
   body?: unknown,
 ): Promise<{ status: number; body: unknown }> {
+  if (remoteStorage()) return remoteDataRequest(projectId, await schema(projectId), method, path, body);
   const filename = await containedFile(
     await instantProject(projectId),
     "records.sqlite",

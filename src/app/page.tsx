@@ -3,7 +3,7 @@ import "./forge-studio.css";
 import { AssemblyDrawing } from "@/components/assembly-drawing";
 import { ForgeMark } from "@/components/forge-mark";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import {
@@ -219,7 +219,7 @@ export default function Studio() {
     running = useRef(false);
   const message = (e: unknown) =>
     setNotice(e instanceof Error ? e.message : "Request failed.");
-  async function call(url: string, options: RequestInit = {}) {
+  const call = useCallback(async (url: string, options: RequestInit = {}) => {
     const res = await fetch(url, {
       cache: "no-store",
       ...options,
@@ -240,16 +240,16 @@ export default function Studio() {
       throw Error((await res.json()).error || "Request failed.");
     }
     return res;
-  }
-  function commit(item: Details) {
+  }, []);
+  const commit = useCallback((item: Details) => {
     setProject(item);
     setFiles(Object.fromEntries(item.files.map((f) => [f.path, f.content])));
     setFile((p) =>
       item.files.some((f) => f.path === p) ? p : item.files[0]?.path || "",
     );
     setPlan(item.blueprint || null);
-  }
-  async function select(id: string) {
+  }, []);
+  const select = useCallback(async (id: string) => {
     const seq = ++serial.current;
     const item = await (
       await call("/api/projects?id=" + encodeURIComponent(id))
@@ -259,7 +259,7 @@ export default function Studio() {
     setActivity([]);
     setLogs("");
     setModal(null);
-  }
+  }, [call, commit]);
   useEffect(() => {
     let active = true;
     async function load() {
@@ -302,7 +302,7 @@ export default function Studio() {
       active = false;
       abort.current?.abort();
     };
-  }, []);
+  }, [call, select]);
   useEffect(() => {
     if (logBox.current) logBox.current.scrollTop = logBox.current.scrollHeight;
   }, [logs, tab]);
@@ -329,7 +329,7 @@ export default function Studio() {
     setView(v);
     setModal(null);
   }
-  function useIdea(text: string) {
+  function applyIdea(text: string) {
     setWatching(false);
     setPrompt(text);
     navigate("Agent");
@@ -802,7 +802,7 @@ export default function Studio() {
                 </div>
               </div>
               <div id="forge-guided-build" hidden={!watching}>
-                {watching && <BuildDemo onUseBrief={useIdea} onClose={() => { setWatching(false); watchButton.current?.focus(); }} />}
+                {watching && <BuildDemo onUseBrief={applyIdea} onClose={() => { setWatching(false); watchButton.current?.focus(); }} />}
               </div>
               <div className="fx-dock">
                 {composer}
@@ -815,7 +815,7 @@ export default function Studio() {
                 <div className="fx-label"><span>Starting points</span><button type="button" onClick={() => setModal("ideas")}>Prompt library <ArrowUpRight size={13}/></button></div>
                 <div className="fx-idea-row">
                   {ideas.map(({ icon: Icon, title, detail, text }, i) => (
-                    <button key={title} onClick={() => useIdea(text)}>
+                    <button key={title} onClick={() => applyIdea(text)}>
                       <div>
                         <Icon size={19} />
                         <small>0{i + 1}</small>
@@ -1115,7 +1115,7 @@ export default function Studio() {
                             inspect={inspect}
                             onInspect={setInspect}
                             refresh={refresh}
-                            onEdit={useIdea}
+                            onEdit={applyIdea}
                           />
                         </>
                       ) : (
@@ -1204,7 +1204,7 @@ export default function Studio() {
           ) : modal === "ideas" ? (
             <div className="fx-library-ideas">
               {ideas.map((i) => (
-                <button key={i.title} onClick={() => useIdea(i.text)}>
+                <button key={i.title} onClick={() => applyIdea(i.text)}>
                   <strong>{i.title}</strong>
                   <span>{i.text}</span>
                 </button>

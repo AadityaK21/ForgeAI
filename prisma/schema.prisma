@@ -41,7 +41,33 @@ model Project {
   leaseUntil  DateTime?
   files       SourceFile[]
   runs        Run[]
+  assets      PreviewAsset[]
+  collections CollectionState[]
+  records     ProjectRecord[]
   updatedAt   DateTime @updatedAt
+}
+model PreviewAsset {
+  projectId String
+  sandboxId String
+  html      String
+  project   Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+  @@id([projectId,sandboxId])
+}
+model CollectionState {
+  projectId String
+  name      String
+  project   Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+  @@id([projectId,name])
+}
+model ProjectRecord {
+  projectId  String
+  collection String
+  id         String
+  data       String
+  createdAt  DateTime @default(now())
+  project    Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+  @@id([projectId,collection,id])
+  @@index([projectId,collection,createdAt])
 }
 model SourceFile {
   projectId String

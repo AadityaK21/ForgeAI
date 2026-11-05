@@ -57,6 +57,8 @@ Design decisions and measured limits are recorded in [DECISIONS.md](DECISIONS.md
 
 ## Private hosting
 
+For the independent Vercel project and durable cloud storage, follow [DEPLOYMENT.md](DEPLOYMENT.md). The instructions below describe the alternative persistent Node server, not Vercel.
+
 Run this application on a persistent Node server with a writable SQLite volume and support for streaming requests up to ten minutes. Set **DATABASE_URL** to a persistent SQLite file and **BUILDER_ACCESS_TOKEN** to a long random server-side secret, complete setup, build, then run **npm start** behind HTTPS. The access token acts as a private invitation code during registration. Existing members sign in with their email and password. Passwords are salted and hashed with scrypt. The server stores only the digest of each expiring session token. Production uses a Secure, HttpOnly, same-site cookie and fails closed when the invitation code is absent. Development without an invitation code is intended for the localhost server.
 
 Builder accounts are separate from studio-site Supabase accounts. Public email verification, password recovery, subscription entitlements and usage metering remain prerequisites for a paid public launch. Existing pre-account projects remain on disk without an owner. After the operator creates their account, run `node prisma/assign-legacy.mjs owner@example.com` with the intended account email to explicitly assign only those legacy projects. SQLite on an ephemeral serverless filesystem does not provide durable project storage. The existing Merova site's OpenAI pilot, Supabase credits and project-payment system are separate.

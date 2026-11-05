@@ -1,5 +1,6 @@
 import * as fs from "node:fs/promises";
 import path from "node:path";
+import { tmpdir } from "node:os";
 import { safePath } from "./artifact-parser";
 
 export function instantId(id: string) {
@@ -10,8 +11,14 @@ export function instantId(id: string) {
 export async function instantProject(projectId: string) {
   if (!/^[a-zA-Z0-9_-]{1,100}$/.test(projectId))
     throw Error("Invalid project.");
-  const base = await fs.realpath(process.cwd());
-  return directories(base, [".sandboxes", projectId]);
+  const configured = process.env.TURSO_DATABASE_URL
+    ? path.join(tmpdir(), "forge-build-cache")
+    : process.env.FORGE_DATA_DIR?.trim();
+  if (configured && !path.isAbsolute(configured))
+    throw Error("FORGE_DATA_DIR must be an absolute persistent directory.");
+  if (process.env.TURSO_DATABASE_URL) await fs.mkdir(configured!, { recursive: true, mode: 0o700 });
+  const base = await fs.realpath(configured || process.cwd());
+  return directories(base, [configured ? "projects" : ".sandboxes", projectId]);
 }
 async function directories(base: string, parts: string[]) {
   let dir = base;
