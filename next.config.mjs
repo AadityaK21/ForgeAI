@@ -19,6 +19,7 @@ const config = {
       "./node_modules/@types/react-dom/**/*",
       "./node_modules/react/**/*",
       "./node_modules/react-dom/**/*",
+      "./node_modules/scheduler/**/*",
       "./node_modules/lucide-react/dist/**/*",
       "./node_modules/lucide-react/package.json",
       "./node_modules/clsx/**/*",
