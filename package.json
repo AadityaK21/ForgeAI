@@ -1,5 +1,5 @@
 {
-  "name": "merova-web-builder",
+  "name": "merova-ai",
   "private": true,
   "version": "1.0.0",
   "scripts": {
@@ -11,14 +11,15 @@
     "db:migrate:remote": "node scripts/migrate-turso.mjs",
     "lint": "eslint src scripts tests --max-warnings 0",
     "typecheck": "tsc --noEmit",
-    "setup": "node prisma/prepare.mjs && prisma generate && prisma db push --skip-generate && node prisma/seed.mjs",
+    "setup": "node prisma/prepare.mjs && prisma generate && prisma db push --skip-generate",
     "test": "tsx --test tests/*.test.ts",
     "settings:owner": "tsx prisma/settings-owner.ts",
-    "test:browser": "node tests/workspace-browser.mjs"
+    "test:browser": "node tests/chat-browser.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
     "@e2b/code-interpreter": "^2.9.0",
+    "@fontsource/inter": "^5.3.0",
     "@libsql/client": "0.8.1",
     "@monaco-editor/react": "^4.7.0",
     "@prisma/adapter-libsql": "6.19.3",
@@ -32,6 +33,8 @@
     "openai": "^7.47.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.0.0",
     "typescript": "~5.9.3",
     "zod": "^4.0.0"

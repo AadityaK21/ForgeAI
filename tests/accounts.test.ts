@@ -65,7 +65,7 @@ test("accounts isolate projects, revoke signed-out sessions and enforce private 
     const cookie = fullCookie.split(";")[0];
     const principal = (await (await session(get(cookie))).json()).user;
     assert.equal(principal.email, credentials.email);
-    const project = (await (await projects(get(cookie))).json()).projects[0];
+    const project = await db.project.create({ data: { title: "Legacy project", ownerId: principal.id } });
     assert.equal((await projects(get(cookie, project.id))).status, 200);
     const second = await authenticate(
       post({ ...credentials, email: "second@example.test" }),

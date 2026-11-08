@@ -41,7 +41,7 @@ test("libSQL accounts, previews and records survive deleting the build cache", a
     assert.equal(signup.status, 201, await signup.clone().text());
     const cookie = signup.headers.get("set-cookie")!.split(";")[0];
     const user = (await signup.json()).user;
-    const project = await db.project.findFirstOrThrow({ where: { ownerId: user.id } });
+    const project = await db.project.create({ data: { title: "Legacy storage fixture", ownerId: user.id } });
     const box = await createInstantWorker(project.id, () => {}, new AbortController().signal);
     cache = await instantProject(project.id);
     const files = instantStarter({ files: {}, install: "", start: "" }).files;
@@ -60,8 +60,13 @@ test("libSQL accounts, previews and records survive deleting the build cache", a
     assert.equal((await instantDataRequest(project.id, "POST", "/api/data/leads", { id: "saved", name: "Duplicate" })).status, 409);
     await box.release(true);
     await assert.rejects(access(path.join(cache, box.id)));
+    const conversation = await db.conversation.create({ data: { ownerId: user.id, title: "Persistent conversation", messages: { create: [{ role: "user", content: "Keep this message" }, { role: "assistant", content: "Saved reply", status: "complete" }] } } });
     await db.$disconnect();
     await migrateTurso();
+    const persistedChat = await db.conversation.findUniqueOrThrow({ where: { id: conversation.id }, include: { messages: true } });
+    assert.equal(persistedChat.messages.length, 2);
+    assert.equal(persistedChat.ownerId, user.id);
+    assert.ok(persistedChat.messages.some(message => message.content === "Saved reply"));
     assert.match(await readInstantHtml(project.id, box.id), /Persistent/);
     assert.equal((await authenticate(post(), false)).status, 200);
     const response = await projects(new Request("http://localhost:3000/api/projects", { headers: { host: "localhost:3000", cookie } }));

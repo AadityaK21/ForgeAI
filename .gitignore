@@ -7,3 +7,4 @@ prisma/*.db*
 *.tsbuildinfo
 
 .vercel
+.qa/

@@ -11,6 +11,33 @@ model User {
   passwordHash String
   sessions     Session[]
   projects     Project[]
+  conversations Conversation[]
+}
+model Conversation {
+  id        String @id @default(cuid())
+  ownerId   String
+  owner     User @relation(fields:[ownerId],references:[id],onDelete:Cascade)
+  title     String @default("New chat")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lease     String?
+  leaseUntil DateTime?
+  messages  ChatMessage[]
+  @@index([ownerId,updatedAt])
+}
+model ChatMessage {
+  id             String @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields:[conversationId],references:[id],onDelete:Cascade)
+  role           String
+  content        String @default("")
+  status         String @default("complete")
+  error          String?
+  model          String?
+  requestId      String?
+  createdAt      DateTime @default(now())
+  @@unique([conversationId,requestId])
+  @@index([conversationId,createdAt])
 }
 model Session {
   digest    String @id

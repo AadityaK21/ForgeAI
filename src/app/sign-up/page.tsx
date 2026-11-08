@@ -1,6 +1,6 @@
 import { AccountScreen } from "@/components/account-screen";
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Create account | ForgeAI" };
+export const metadata = { title: "Create account | Merova AI" };
 export default function Page() {
   return (
     <AccountScreen

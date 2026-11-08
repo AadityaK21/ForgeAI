@@ -123,18 +123,6 @@ export async function authenticate(req: Request, signup: boolean) {
           data: {
             email,
             passwordHash,
-            projects: {
-              create: {
-                title: "First project",
-                files: {
-                  create: {
-                    path: "BRIEF.md",
-                    content:
-                      "# Project brief\n\nDescribe the customer, their problem, and one task the first version should help them complete.\n",
-                  },
-                },
-              },
-            },
           },
           select: { id: true },
         });
