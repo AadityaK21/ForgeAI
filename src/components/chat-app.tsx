@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { AgentSteps, type RunView } from "./agent-steps";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowUp,
@@ -26,10 +27,11 @@ type Message = {
   role: string;
   content: string;
   status: string;
+  agentRuns?: RunView[];
   error?: string | null;
   model?: string | null;
 };
-type Conversation = Summary & { messages: Message[] };
+type Conversation = Summary & { messages: Message[]; agentMode?: boolean };
 const blankConfig: ChatConfig = { headers: {}, model: "" };
 async function jsonRequest(url: string, options?: RequestInit) {
   const response = await fetch(url, {
@@ -45,6 +47,9 @@ async function jsonRequest(url: string, options?: RequestInit) {
   return data;
 }
 export function ChatApp() {
+  const [newAgentMode, setNewAgentMode] = useState(false);
+  const [modeBusy, setModeBusy] = useState(false);
+  const [agentPlan, setAgentPlan] = useState("");
   const [user, setUser] = useState<User | null>(null),
     [ready, setReady] = useState(false);
   const [chats, setChats] = useState<Summary[]>([]),
@@ -104,10 +109,19 @@ export function ChatApp() {
       if (version === selection.current) setLoading(false);
     }
   }, []);
+  useEffect(() => {
+    const refreshAgent = () => {
+      const id = new URLSearchParams(location.search).get("chat");
+      if (id) void openChat(id, false);
+    };
+    window.addEventListener("agent-resumed", refreshAgent);
+    return () => window.removeEventListener("agent-resumed", refreshAgent);
+  }, [openChat]);
   const newChat = useCallback(() => {
     if (running.current) return;
     selection.current++;
     setChat(null);
+    setNewAgentMode(false);
     setDraft("");
     setError("");
     setLoading(false);
@@ -172,6 +186,7 @@ export function ChatApp() {
       else {
         selection.current++;
         setChat(null);
+        setNewAgentMode(false);
         setError("");
       }
     };
@@ -288,7 +303,8 @@ export function ChatApp() {
     };
   }, [mobile, drawer]);
   async function send(retryId?: string) {
-    if (running.current || loading || (!retryId && !draft.trim())) return;
+    if (running.current || modeBusy || loading || (!retryId && !draft.trim()))
+      return;
     if (!user) {
       setError("Sign in or create an account to start chatting.");
       return;
@@ -296,6 +312,7 @@ export function ChatApp() {
     const message = draft.trim();
     running.current = true;
     setBusy(true);
+    setAgentPlan("");
     setError("");
     nearBottom.current = true;
     setAway(false);
@@ -309,6 +326,7 @@ export function ChatApp() {
         headers: { "Content-Type": "application/json", ...config.headers },
         body: JSON.stringify({
           conversationId: chat?.id,
+          agentMode: chat?.agentMode ?? newAgentMode,
           requestId: crypto.randomUUID(),
           ...(retryId ? { retryId } : { message }),
           model: config.model || undefined,
@@ -344,7 +362,57 @@ export function ChatApp() {
                 );
                 setRefresh((v) => v + 1);
               }
-              if (event.type === "delta")
+              if (event.type === "plan") setAgentPlan(event.text);
+              if (["tool_call", "tool_result", "final"].includes(event.type)) {
+                setChat(
+                  (c) =>
+                    c && {
+                      ...c,
+                      messages: c.messages.map((m) => {
+                        if (m.id !== event.id) return m;
+                        const runs = [...(m.agentRuns || [])];
+                        let run = runs.find((r) => r.id === event.runId);
+                        if (!run) {
+                          run = {
+                            id: event.runId,
+                            status: "running",
+                            steps: [],
+                          };
+                          runs.push(run);
+                        }
+                        run = { ...run, steps: [...run.steps] };
+                        runs[runs.findIndex((r) => r.id === event.runId)] = run;
+                        if (event.type === "tool_call")
+                          run.steps.push({
+                            id: event.stepId,
+                            name: event.name,
+                            input: event.input,
+                            preview: "Running...",
+                            failed: false,
+                            sources: "[]",
+                          });
+                        if (event.type === "tool_result")
+                          run.steps = run.steps.map((s) =>
+                            s.id === event.stepId
+                              ? {
+                                  ...s,
+                                  preview: event.output,
+                                  failed: event.failed,
+                                  sources: JSON.stringify(event.sources),
+                                }
+                              : s,
+                          );
+                        if (event.type === "final") {
+                          run.status = event.reason;
+                          run.tokens = event.tokens;
+                          run.cost = event.cost;
+                        }
+                        return { ...m, agentRuns: runs };
+                      }),
+                    },
+                );
+              }
+              if (event.type === "delta" || event.type === "message_delta")
                 setChat(
                   (c) =>
                     c && {
@@ -370,7 +438,8 @@ export function ChatApp() {
                     },
                 );
               }
-              if (event.type === "error") throw Error(event.error);
+              if (event.type === "error" && !event.runId)
+                throw Error(event.error);
             }
           if (chunk.done) break;
         }
@@ -417,6 +486,7 @@ export function ChatApp() {
         else {
           selection.current++;
           setChat(null);
+          setNewAgentMode(false);
           setDraft("");
           setError("");
         }
@@ -744,6 +814,10 @@ export function ChatApp() {
                     </div>
                   ) : (
                     <>
+                      <AgentSteps runs={m.agentRuns} />
+                      {m.status === "streaming" && agentPlan && (
+                        <p className="agent-plan">{agentPlan}</p>
+                      )}
                       <ChatMarkdown text={m.content} />
                       {m.status === "streaming" && !m.content && (
                         <span className="thinking" role="status">
@@ -935,6 +1009,45 @@ export function ChatApp() {
             }}
           />
           <div className="composer-controls">
+            <label className="agent-toggle">
+              <input
+                type="checkbox"
+                checked={chat?.agentMode ?? newAgentMode}
+                disabled={busy || loading || modeBusy}
+                onChange={async (e) => {
+                  const enabled = e.target.checked;
+                  if (!chat) {
+                    setNewAgentMode(enabled);
+                    return;
+                  }
+                  const id = chat.id,
+                    previous = chat.agentMode;
+                  setChat((c) =>
+                    c?.id === id ? { ...c, agentMode: enabled } : c,
+                  );
+                  setModeBusy(true);
+                  try {
+                    await jsonRequest("/api/conversations", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ id, agentMode: enabled }),
+                    });
+                  } catch (error) {
+                    setChat((c) =>
+                      c?.id === id ? { ...c, agentMode: previous } : c,
+                    );
+                    setError(
+                      error instanceof Error
+                        ? error.message
+                        : "Could not change agent mode.",
+                    );
+                  } finally {
+                    setModeBusy(false);
+                  }
+                }}
+              />{" "}
+              Agent mode
+            </label>
             {busy ? (
               <button
                 type="button"
@@ -948,7 +1061,7 @@ export function ChatApp() {
               <button
                 className="send-button"
                 aria-label="Send message"
-                disabled={!ready || !draft.trim() || loading}
+                disabled={!ready || !draft.trim() || loading || modeBusy}
               >
                 <ArrowUp size={20} />
               </button>

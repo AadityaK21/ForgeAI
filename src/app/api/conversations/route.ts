@@ -14,7 +14,17 @@ export async function GET(req: Request) {
       const conversation = await db.conversation.findFirst({
         where: { id, ownerId: user.id },
         include: {
-          messages: { orderBy: [{ createdAt: "asc" }, { id: "asc" }] },
+          messages: {
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            include: {
+              agentRuns: {
+                orderBy: { createdAt: "asc" },
+                include: {
+                  steps: { orderBy: [{ createdAt: "asc" }, { id: "asc" }] },
+                },
+              },
+            },
+          },
         },
       });
       if (!conversation) throw new HttpError(404, "Conversation not found.");
@@ -43,11 +53,31 @@ export async function GET(req: Request) {
             : m,
         );
       }
+      if (!conversation.leaseUntil || conversation.leaseUntil <= new Date()) {
+        await db.agentRun.updateMany({
+          where: {
+            status: "running",
+            message: {
+              conversationId: id,
+              conversation: {
+                OR: [{ leaseUntil: null }, { leaseUntil: { lte: new Date() } }],
+              },
+            },
+          },
+          data: { status: "error", finishedAt: new Date() },
+        });
+        conversation.messages.forEach((m) =>
+          m.agentRuns.forEach((r) => {
+            if (r.status === "running") r.status = "error";
+          }),
+        );
+      }
       return Response.json(
         {
           conversation: {
             id: conversation.id,
             title: conversation.title,
+            agentMode: conversation.agentMode,
             messages: conversation.messages,
             updatedAt: conversation.updatedAt,
           },
@@ -95,14 +125,22 @@ export async function PATCH(req: Request) {
   try {
     const user = await authorize(req);
     const input = z
-      .object({ id: idSchema, title: z.string().trim().min(1).max(100) })
+      .object({
+        id: idSchema,
+        title: z.string().trim().min(1).max(100).optional(),
+        agentMode: z.boolean().optional(),
+      })
       .strict()
       .safeParse(await readJson(req));
     if (!input.success)
       throw new HttpError(400, "Enter a title of 1 to 100 characters.");
     const result = await db.conversation.updateMany({
-      where: { id: input.data.id, ownerId: user.id },
-      data: { title: input.data.title },
+      where: {
+        id: input.data.id,
+        ownerId: user.id,
+        OR: [{ leaseUntil: null }, { leaseUntil: { lte: new Date() } }],
+      },
+      data: { title: input.data.title, agentMode: input.data.agentMode },
     });
     if (!result.count) throw new HttpError(404, "Conversation not found.");
     return Response.json({ ok: true });

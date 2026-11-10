@@ -14,7 +14,8 @@
     "setup": "node prisma/prepare.mjs && prisma generate && prisma db push --skip-generate",
     "test": "tsx --test tests/*.test.ts",
     "settings:owner": "tsx prisma/settings-owner.ts",
-    "test:browser": "node tests/chat-browser.mjs"
+    "test:browser": "node tests/chat-browser.mjs",
+    "test:agent-browser": "node tests/agent-browser.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
@@ -24,8 +25,10 @@
     "@monaco-editor/react": "^4.7.0",
     "@prisma/adapter-libsql": "6.19.3",
     "@prisma/client": "6.19.3",
+    "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
     "esbuild": "0.28.2",
+    "ipaddr.js": "^2.5.0",
     "jszip": "^3.10.2",
     "lucide-react": "^0.577.0",
     "monaco-editor": "0.52.2",

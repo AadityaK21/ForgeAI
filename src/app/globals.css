@@ -920,3 +920,30 @@ svg {
     scroll-behavior: auto !important;
   }
 }
+
+.agent-toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-right: auto; cursor: pointer; }
+.agent-toggle input { accent-color: #888; width: 16px; height: 16px; }
+.agent-steps { margin: 8px 0 20px; font-size: 13px; min-width: 0; }
+.agent-status, .agent-plan { color: #aaa; font-size: 12px; }
+.agent-steps details { border: 1px solid #444; border-radius: 10px; padding: 12px; margin: 8px 0; }
+.agent-steps summary { cursor: pointer; overflow-wrap: anywhere; }
+.agent-steps pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow: auto; font-size: 12px; padding: 8px 0; }
+.agent-steps a, .agent-steps button { display: inline-block; margin: 6px 12px 0 0; text-decoration: underline; }
+
+.memory-settings { border-top: 1px solid #444; margin-top: 24px; padding-top: 20px; }
+.memory-settings h3 { font-size: 16px; margin-bottom: 10px; }
+.memory-switch { display: flex; align-items: center; gap: 10px; margin: 16px 0; }
+.memory-switch input { width: 18px; height: 18px; accent-color: #888; }
+.memory-list { list-style: none; padding: 0; }
+.memory-list li { border: 1px solid #444; border-radius: 8px; padding: 12px; margin: 12px 0; }
+.memory-list span { display: block; color: #aaa; font-size: 12px; margin: 6px 0; }
+.memory-list button { margin-right: 16px; }
+.memory-editor { display: grid; gap: 12px; margin: 16px 0; }
+.memory-settings button, .memory-proposal button { padding: 8px 12px; border: 1px solid #555; border-radius: 8px; }
+.memory-settings button:disabled { opacity: .5; }
+.memory-settings select { width: 100%; padding: 10px; background: #171717; color: #eee; border: 1px solid #555; border-radius: 8px; }
+.memory-settings [role=status], .memory-proposal [role=status] { font-size: 13px; }
+
+.memory-proposal { margin-block: 12px; padding: 14px; border: 1px solid currentColor; border-radius: 12px; }
+.memory-proposal button, .memory-saved button { min-height: 44px; padding: 8px 14px; }
+.memory-saved { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-block: 8px; padding: 6px 10px; border: 1px solid currentColor; border-radius: 12px; }

@@ -12,6 +12,8 @@ model User {
   sessions     Session[]
   projects     Project[]
   conversations Conversation[]
+  memoryEnabled Boolean @default(false)
+  memories PreferenceMemory[]
 }
 model Conversation {
   id        String @id @default(cuid())
@@ -22,6 +24,7 @@ model Conversation {
   updatedAt DateTime @updatedAt
   lease     String?
   leaseUntil DateTime?
+  agentMode Boolean @default(false)
   messages  ChatMessage[]
   @@index([ownerId,updatedAt])
 }
@@ -34,6 +37,7 @@ model ChatMessage {
   status         String @default("complete")
   error          String?
   model          String?
+  agentRuns      AgentRun[]
   requestId      String?
   createdAt      DateTime @default(now())
   @@unique([conversationId,requestId])
@@ -112,4 +116,104 @@ model Run {
   createdAt DateTime @default(now())
   project   Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
   @@index([projectId,createdAt])
+}
+
+model AgentRun {
+  contextSnapshot String?
+  id String @id @default(cuid())
+  messageId String
+  message ChatMessage @relation(fields:[messageId],references:[id],onDelete:Cascade)
+  status String @default("running")
+  model String
+  tokens Int @default(0)
+  cost Float @default(0)
+  createdAt DateTime @default(now())
+  finishedAt DateTime?
+  steps AgentStep[]
+  checkpoint AgentCheckpoint?
+  reservation AgentReservation?
+  @@index([messageId,createdAt])
+}
+model AgentStep {
+  id String @id
+  runId String
+  run AgentRun @relation(fields:[runId],references:[id],onDelete:Cascade)
+  name String
+  input String
+  preview String
+  failed Boolean @default(false)
+  sources String @default("[]")
+  createdAt DateTime @default(now())
+  output AgentOutput?
+  confirmation AgentConfirmation?
+  @@index([runId,createdAt])
+}
+model AgentOutput {
+  stepId String @id
+  step AgentStep @relation(fields:[stepId],references:[id],onDelete:Cascade)
+  content String
+}
+
+model PreferenceMemory {
+  id String @id @default(cuid())
+  ownerId String
+  owner User @relation(fields:[ownerId],references:[id],onDelete:Cascade)
+  category String
+  value String
+  source String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime
+  @@unique([ownerId,category])
+  @@index([ownerId,expiresAt])
+}
+
+model AgentCheckpoint {
+  runId String @id
+  run AgentRun @relation(fields:[runId],references:[id],onDelete:Cascade)
+  state String
+  provider String
+  expiresAt DateTime
+}
+model AgentConfirmation {
+  stepId String @id
+  step AgentStep @relation(fields:[stepId],references:[id],onDelete:Cascade)
+  status String @default("pending")
+  tainted Boolean @default(false)
+  undoId String?
+  expiresAt DateTime
+}
+model AgentSpend {
+  day String @id
+  micros Int @default(0)
+}
+model AgentReservation {
+  runId String @id
+  run AgentRun @relation(fields:[runId],references:[id],onDelete:Cascade)
+  day String
+  micros Int
+  settled Boolean @default(false)
+}
+model AgentAudit {
+  id String @id @default(cuid())
+  userId String
+  runId String
+  tool String
+  arguments String
+  resultSize Int @default(0)
+  durationMs Int @default(0)
+  status String
+  createdAt DateTime @default(now())
+  @@index([createdAt])
+}
+model MemoryUndo {
+  id String @id @default(cuid())
+  ownerId String
+  category String
+  memoryId String
+  savedAt DateTime
+  previous String?
+  expiresAt DateTime
+  used Boolean @default(false)
+  @@index([ownerId])
 }

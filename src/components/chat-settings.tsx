@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { MemorySettings } from "./memory-settings";
 import { ChatDialog } from "./chat-dialog";
 import type { ProviderState } from "@/lib/provider-types";
 export type ChatConfig = { headers: Record<string, string>; model: string };
@@ -216,6 +217,7 @@ export function ChatSettings({
           </button>
         </div>
       </form>
+      <MemorySettings />
     </ChatDialog>
   );
 }

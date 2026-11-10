@@ -4,11 +4,23 @@ import { authorize, failure, HttpError, readJson } from "@/lib/access";
 import { db } from "@/lib/db";
 import { requestProviders } from "@/lib/providers";
 import { chatText, providerError, type ChatTurn } from "@/lib/chat-provider";
+import { agentConfig, modelSession } from "@/lib/agent/provider";
+import { compactHistory } from "@/lib/agent/context";
+import { memoryTools } from "@/lib/agent/memory";
+import { runAgent } from "@/lib/agent/loop";
+import { persistence } from "@/lib/agent/persistence";
+import {
+  agentRequest,
+  reserveSpend,
+  settleSpend,
+  dailyBudgetSignal,
+} from "@/lib/agent/usage";
 export const runtime = "nodejs";
 export const maxDuration = 180;
 const inputSchema = z
   .object({
     conversationId: z.string().cuid().optional(),
+    agentMode: z.boolean().optional(),
     requestId: z.string().uuid(),
     message: z.string().trim().min(1).max(16000).optional(),
     retryId: z.string().cuid().optional(),
@@ -26,8 +38,16 @@ export async function POST(req: Request) {
     const parsed = inputSchema.safeParse(await readJson(req, false, 70000));
     if (!parsed.success)
       throw new HttpError(400, "Enter a message of up to 16,000 characters.");
-    const input = parsed.data,
-      config = requestProviders(req);
+    const input = parsed.data;
+    const saved = input.conversationId
+      ? await db.conversation.findFirst({
+          where: { id: input.conversationId, ownerId: user.id },
+          select: { agentMode: true },
+        })
+      : null;
+    const agentMode = input.agentMode ?? saved?.agentMode ?? false;
+    const agent = agentMode ? agentConfig(req, input.model) : null;
+    const config = agent ? agent.config : requestProviders(req);
     if (config.missing.length)
       throw new HttpError(
         400,
@@ -72,6 +92,7 @@ export async function POST(req: Request) {
           429,
           "You've sent 30 messages in ten minutes. Please wait before sending another.",
         );
+      if (agentMode) await agentRequest(tx, user.id, true, now);
       if (!conversation)
         conversation = await tx.conversation.create({
           data: {
@@ -85,7 +106,11 @@ export async function POST(req: Request) {
           ownerId: user.id,
           OR: [{ leaseUntil: null }, { leaseUntil: { lte: now } }],
         },
-        data: { lease, leaseUntil: new Date(now.getTime() + 180000) },
+        data: {
+          lease,
+          leaseUntil: new Date(now.getTime() + 180000),
+          agentMode,
+        },
       });
       if (!acquired.count)
         throw new HttpError(
@@ -99,12 +124,19 @@ export async function POST(req: Request) {
       const history = await tx.chatMessage.findMany({
         where: { conversationId: conversation.id },
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        include: {
+          agentRuns: {
+            include: {
+              steps: { orderBy: [{ createdAt: "asc" }, { id: "asc" }] },
+            },
+          },
+        },
       });
       if (
-        history.length >= 200 ||
+        history.length >= (agent ? 600 : 200) ||
         history.reduce((n, m) => n + m.content.length, 0) +
           (input.message?.length || 0) >
-          100000
+          (agent ? 500000 : 100000)
       )
         throw new HttpError(
           413,
@@ -152,7 +184,7 @@ export async function POST(req: Request) {
             createdAt: now,
           },
         });
-        history.push(message);
+        history.push({ ...message, agentRuns: [] });
         assistant = await tx.chatMessage.create({
           data: {
             conversationId: conversation.id,
@@ -169,13 +201,43 @@ export async function POST(req: Request) {
           role: m.role === "user" ? "user" : "assistant",
           content: m.content,
         }));
-      return { conversation, assistant, history, messages };
+      const compacted = agent
+        ? compactHistory(
+            history
+              .filter((m) => m.role === "user" || Boolean(m.content))
+              .map((m) => ({
+                id: m.id,
+                role: m.role === "user" ? "user" : "assistant",
+                content: m.content,
+              })),
+            Math.max(1000, agent.limits.context - 10000),
+          )
+        : { messages, snapshot: null };
+      const run = agent
+        ? await tx.agentRun.create({
+            data: {
+              messageId: assistant.id,
+              model,
+              contextSnapshot: compacted.snapshot
+                ? JSON.stringify(compacted.snapshot)
+                : null,
+            },
+          })
+        : null;
+      if (run && agent) await reserveSpend(tx, run.id, agent.limits.cost, now);
+      return {
+        conversation,
+        assistant,
+        history,
+        messages: compacted.messages,
+        run,
+      };
     });
     const abort = new AbortController();
     const signal = AbortSignal.any([
       abort.signal,
       req.signal,
-      AbortSignal.timeout(150000),
+      agent ? dailyBudgetSignal() : AbortSignal.timeout(150000),
     ]);
     const encoder = new TextEncoder();
     let connected = true;
@@ -201,27 +263,83 @@ export async function POST(req: Request) {
             id: prepared.conversation.id,
             title: prepared.conversation.title,
             updatedAt: now,
+            agentMode,
           },
-          messages: [...prepared.history, prepared.assistant],
+          messages: [
+            ...prepared.history,
+            {
+              ...prepared.assistant,
+              agentRuns: prepared.run ? [{ ...prepared.run, steps: [] }] : [],
+            },
+          ],
         });
         try {
-          for await (const delta of chatText(
-            config,
-            model,
-            prepared.messages,
-            signal,
-          )) {
-            signal.throwIfAborted();
-            if (content.length + delta.length > 100000)
-              throw new HttpError(422, "The answer reached its length limit.");
-            content += delta;
-            send({ type: "delta", text: delta, id: prepared.assistant.id });
-            if (Date.now() - lastSave > 1500) {
-              await db.chatMessage.update({
-                where: { id: prepared.assistant.id },
-                data: { content },
-              });
-              lastSave = Date.now();
+          if (agent && prepared.run) {
+            const store = persistence(
+              user.id,
+              prepared.run.id,
+              agent.config.provider!,
+            );
+            const result = await runAgent({
+              ...store,
+              session: modelSession(agent, prepared.messages),
+              tool: memoryTools(user.id),
+              limits: agent.limits,
+              signal,
+              emit(event) {
+                if (event.type === "message_delta") content += event.text;
+                send({
+                  ...event,
+                  id: prepared.assistant.id,
+                  runId: prepared.run!.id,
+                });
+              },
+              async save(step) {
+                await store.save(step);
+                await db.chatMessage.update({
+                  where: { id: prepared.assistant.id },
+                  data: { content },
+                });
+              },
+            });
+            content = result.text;
+            if (result.reason !== "needs_user_input")
+              await settleSpend(prepared.run.id, result.cost);
+            status =
+              result.reason === "done" || result.reason === "needs_user_input"
+                ? "complete"
+                : "stopped";
+            await db.agentRun.update({
+              where: { id: prepared.run.id },
+              data: {
+                status: result.reason,
+                tokens: result.tokens,
+                cost: result.cost,
+                finishedAt: new Date(),
+              },
+            });
+          } else {
+            for await (const delta of chatText(
+              config,
+              model,
+              prepared.messages,
+              signal,
+            )) {
+              signal.throwIfAborted();
+              if (content.length + delta.length > 100000)
+                throw new HttpError(
+                  422,
+                  "The answer reached its length limit.",
+                );
+              content += delta;
+              send({ type: "delta", text: delta, id: prepared.assistant.id });
+              if (Date.now() - lastSave > 1500) {
+                await db.chatMessage.update({
+                  where: { id: prepared.assistant.id },
+                  data: { content },
+                });
+                lastSave = Date.now();
+              }
             }
           }
           if (!content.trim())
@@ -236,6 +354,11 @@ export async function POST(req: Request) {
             : providerError(e);
         } finally {
           try {
+            if (prepared.run)
+              await db.agentRun.updateMany({
+                where: { id: prepared.run.id, status: "running" },
+                data: { status: "error", finishedAt: new Date() },
+              });
             await db.$transaction([
               db.chatMessage.update({
                 where: { id: prepared.assistant.id },
