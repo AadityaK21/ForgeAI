@@ -1,9 +1,42 @@
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
+import { randomUUID } from "node:crypto";
 import { HttpError } from "./access";
 import type { Providers } from "./providers";
 
 export type ChatTurn = { role: "user" | "assistant"; content: string };
+
+// Never log the SDK error object: it can contain prompts, keys or headers.
+export function providerDiagnostic(error: unknown) {
+  const api = error instanceof OpenAI.APIError || error instanceof Anthropic.APIError;
+  const body = api && error.error && typeof error.error === "object"
+    ? error.error as Record<string, unknown> : {};
+  const identifier = (value: unknown) => typeof value === "string" &&
+    /^[a-z][a-z0-9_]{0,63}$/.test(value) && !value.startsWith("sk") ? value : null;
+  const message = api && typeof body.message === "string" ? body.message : "";
+  const reason = /organi[sz]ation.*(?:must be verified|verification required)|verify your organi[sz]ation/i.test(message)
+    ? "organization_verification_required"
+    : /streaming.*(?:not supported|not allowed)|does not support.*stream/i.test(message)
+      ? "streaming_not_supported"
+      : /country.*not supported|unsupported.*(?:country|region)/i.test(message)
+        ? "unsupported_region"
+        : "unclassified";
+  return {
+    provider: error instanceof OpenAI.APIError ? "openai" : error instanceof Anthropic.APIError ? "anthropic" : "application",
+    status: api && typeof error.status === "number" ? error.status : null,
+    code: identifier(error instanceof OpenAI.APIError ? error.code : body.code),
+    type: identifier(body.type),
+    reason,
+    requestId: error instanceof OpenAI.APIError && typeof error.requestID === "string" && /^req_[a-zA-Z0-9_-]{1,100}$/.test(error.requestID) ? error.requestID : null,
+  };
+}
+
+export function reportedProviderError(error: unknown) {
+  if (error instanceof HttpError) return error.message;
+  const reference = randomUUID();
+  console.error(JSON.stringify({ event: "chat_provider_failure", reference, ...providerDiagnostic(error) }));
+  return `${providerError(error)} Reference: ${reference}`;
+}
 function ollamaUrl(route: string) {
   const port = process.env.MEROVA_OLLAMA_PORT || "11434";
   if (!/^\d{1,5}$/.test(port) || Number(port) < 1 || Number(port) > 65535)
@@ -15,6 +48,13 @@ const instructions =
 
 export function providerError(error: unknown) {
   if (error instanceof HttpError) return error.message;
+  const diagnostic = providerDiagnostic(error);
+  if (diagnostic.reason === "organization_verification_required")
+    return "OpenAI requires organization verification to stream this model. Verify your organization in OpenAI's API settings, or select another model.";
+  if (diagnostic.reason === "streaming_not_supported")
+    return "This model does not allow streaming with this API account. Select another model for now.";
+  if (diagnostic.reason === "unsupported_region")
+    return "The provider rejected the request because of a regional access restriction. Contact the provider with the error reference.";
   const status =
     error instanceof Anthropic.APIError || error instanceof OpenAI.APIError
       ? error.status

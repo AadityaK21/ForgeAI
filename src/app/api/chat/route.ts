@@ -3,7 +3,7 @@ import { z } from "zod";
 import { authorize, failure, HttpError, readJson } from "@/lib/access";
 import { db } from "@/lib/db";
 import { requestProviders } from "@/lib/providers";
-import { chatText, providerError, type ChatTurn } from "@/lib/chat-provider";
+import { chatText, reportedProviderError, type ChatTurn } from "@/lib/chat-provider";
 import { agentConfig, modelSession } from "@/lib/agent/provider";
 import { compactHistory } from "@/lib/agent/context";
 import { memoryTools } from "@/lib/agent/memory";
@@ -351,7 +351,7 @@ export async function POST(req: Request) {
           status = signal.aborted ? "stopped" : "error";
           error = signal.aborted
             ? "Response stopped. You can retry or send a follow-up."
-            : providerError(e);
+            : reportedProviderError(e);
         } finally {
           try {
             if (prepared.run)

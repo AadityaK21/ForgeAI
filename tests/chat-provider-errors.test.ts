@@ -1,8 +1,31 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import OpenAI from "openai";
-import { chatText, providerError } from "../src/lib/chat-provider";
+import { chatText, providerError, providerDiagnostic, reportedProviderError } from "../src/lib/chat-provider";
 import { requestProviders } from "../src/lib/providers";
+
+test("diagnostics correlate failures without logging messages, keys or arbitrary error objects", () => {
+  const error = new OpenAI.APIError(undefined, {
+    code: "unsupported_value", type: "invalid_request_error",
+    message: "Your organization must be verified to stream this model. private@example.com sk-secret-value",
+    prompt: "private user content",
+  }, undefined, new Headers({ "x-request-id": "req_fixture123" }));
+  assert.match(providerError(error), /organization verification/);
+  const diagnostic = providerDiagnostic(error);
+  assert.equal(diagnostic.code, "unsupported_value");
+  assert.equal(diagnostic.requestId, "req_fixture123");
+  const original = console.error;
+  const logs: string[] = [];
+  console.error = (value) => logs.push(String(value));
+  try {
+    const text = reportedProviderError(error);
+    const logged = JSON.parse(logs[0]);
+    assert.ok(text.endsWith(logged.reference));
+    assert.equal(logged.reason, "organization_verification_required");
+    assert.doesNotMatch(text + logs.join(""), /private@|sk-secret|private user content|prompt/);
+  } finally { console.error = original; }
+  assert.equal(providerDiagnostic(new OpenAI.APIError(undefined, { code: "sk_secret", type: "user@example.com" }, undefined, undefined)).code, null);
+});
 
 test("OpenAI streaming failures preserve categories without exposing provider details", async () => {
   const originalFetch = globalThis.fetch;
