@@ -60,6 +60,8 @@ export function providerError(error: unknown) {
       ? error.status
       : undefined;
   const code = error instanceof OpenAI.APIError ? error.code : undefined;
+  if (code === "credit_balance_exhausted")
+    return "OpenAI reports that the organization behind this API key has no API credits remaining. Check that organization's credit balance in OpenAI API billing. If your credits belong to another organization, use a key from that organization in Settings.";
   if (code === "insufficient_quota")
     return "The provider reports insufficient API quota for this key's project. Check that project's API limits, then retry.";
   if (code === "rate_limit_exceeded" || code === "slow_down")

@@ -39,6 +39,7 @@ test("OpenAI streaming failures preserve categories without exposing provider de
         ["model_not_found", /cannot access/],
         ["rate_limit_exceeded", /rate limiting/],
         ["insufficient_quota", /insufficient API quota/],
+        ["credit_balance_exhausted", /no API credits remaining/],
         ["unsupported_parameter", /request format/],
         ["unknown-secret-code", /unrecognized error/],
       ] as const) {
