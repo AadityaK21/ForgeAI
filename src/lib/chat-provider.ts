@@ -19,13 +19,30 @@ export function providerError(error: unknown) {
     error instanceof Anthropic.APIError || error instanceof OpenAI.APIError
       ? error.status
       : undefined;
+  const code = error instanceof OpenAI.APIError ? error.code : undefined;
+  if (code === "insufficient_quota")
+    return "The provider reports insufficient API quota for this key's project. Check that project's API limits, then retry.";
+  if (code === "rate_limit_exceeded" || code === "slow_down")
+    return "The provider is temporarily rate limiting requests. Wait a moment, then retry.";
+  if (code === "server_error" || code === "server_is_overloaded" || (status !== undefined && status >= 500))
+    return "The model provider is temporarily unavailable or overloaded. Your messages are saved. Retry in a moment.";
+  if (code === "model_not_found")
+    return "This API key cannot access the selected model. Load available models in Settings and select another model.";
+  if (code === "invalid_api_key")
+    return "The provider rejected this API key. Replace it in Settings.";
+  if (code === "unsupported_parameter" || code === "invalid_request_error" || code === "invalid_value")
+    return "The selected model rejected the request format. Try another model and report this error to Merova AI.";
   if (status === 401 || status === 403)
     return "The provider rejected this key. Check your API key and account permissions in Settings.";
   if (status === 429)
     return "The provider's rate or credit limit was reached. Check your provider account, then retry.";
   if (status === 404 || status === 400)
     return "This model could not accept the request. Refresh the model list in Settings and select another model.";
-  return "The model connection was interrupted. Your messages are saved. Try again in a moment.";
+  if (error instanceof OpenAI.APIConnectionError)
+    return "The server could not maintain its connection to OpenAI. Your messages are saved. Retry in a moment.";
+  if (error instanceof OpenAI.APIError || error instanceof Anthropic.APIError)
+    return "The model provider returned an unrecognized error. Your messages are saved. Try another model or report this error to Merova AI.";
+  return "The response could not finish. Your messages are saved. Retry or report this error to Merova AI.";
 }
 
 export async function availableModels(config: Providers, signal: AbortSignal) {
@@ -140,8 +157,10 @@ export async function* chatText(
           422,
           "The response reached its limit. Ask for a shorter answer or try another model.",
         );
-      if (event.type === "error" || event.type === "response.failed")
-        throw new Error("Provider failed");
+      if (event.type === "error")
+        throw new OpenAI.APIError(undefined, event, undefined, undefined);
+      if (event.type === "response.failed")
+        throw new OpenAI.APIError(undefined, event.response.error ?? {}, undefined, undefined);
     }
     if (!finished) throw new Error("Incomplete stream");
   } else if (config.provider === "local") {
